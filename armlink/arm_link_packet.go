@@ -28,18 +28,18 @@ func NewArmLinkPacket(br, sr, er, wa, wr, g uint16, d, b, e byte) *ArmLinkPacket
 }
 
 func (alp *ArmLinkPacket) Bytes() []byte {
-	baseRotationHighByte := byte(alp.baseRotation >> 8)
-	baseRotationLowByte := byte(alp.baseRotation & 0x0F)
-	shoulderRotationHighByte := byte(alp.shoulderRotation >> 8)
-	shoulderRotationLowByte := byte(alp.shoulderRotation & 0x0F)
-	elbowRotationHighByte := byte(alp.elbowRotation >> 8)
-	elbowRotationLowByte := byte(alp.elbowRotation & 0x0F)
-	wristAngleHighByte := byte(alp.wristAngle >> 8)
-	wristAngleLowByte := byte(alp.wristAngle & 0x0F)
-	wristRotationHighByte := byte(alp.wristRotation >> 8)
-	wristRotationLowByte := byte(alp.wristRotation & 0x0F)
-	gripperHighByte := byte(alp.gripper >> 8)
-	gripperLowByte := byte(alp.gripper & 0x0F)
+	baseRotationHighByte := byte((alp.baseRotation / 256) % 256)
+	baseRotationLowByte := byte(alp.baseRotation % 256)
+	shoulderRotationHighByte := byte((alp.shoulderRotation / 256) % 256)
+	shoulderRotationLowByte := byte(alp.shoulderRotation % 256)
+	elbowRotationHighByte := byte((alp.elbowRotation / 256) % 256)
+	elbowRotationLowByte := byte(alp.elbowRotation % 256)
+	wristAngleHighByte := byte((alp.wristAngle / 256) % 256)
+	wristAngleLowByte := byte(alp.wristAngle % 256)
+	wristRotationHighByte := byte((alp.wristRotation / 256) % 256)
+	wristRotationLowByte := byte(alp.wristRotation % 256)
+	gripperHighByte := byte((alp.gripper / 256) % 256)
+	gripperLowByte := byte(alp.gripper % 256)
 
 	checksum := ^((baseRotationHighByte +
 		baseRotationLowByte +
