@@ -1,5 +1,11 @@
 package armlink
 
+var (
+	ExtendedStop  = byte(17)
+	ExtendedReset = byte(64)
+	ExtendedSleep = byte(96)
+)
+
 type ArmLinkPacket struct {
 	baseRotation            uint16
 	shoulderRotation        uint16
@@ -10,6 +16,10 @@ type ArmLinkPacket struct {
 	deltaByte               byte
 	buttonByte              byte
 	extendedInstructionByte byte
+}
+
+func (alp *ArmLinkPacket) SetExtended(e byte) {
+	alp.extendedInstructionByte = e
 }
 
 func NewArmLinkPacket(br, sr, er, wa, wr, g uint16, d, b, e byte) *ArmLinkPacket {

@@ -34,17 +34,17 @@ var (
 
 	shoulderRotation = app.
 				Flag("shoulder", "Shoulder rotation [205-810].").
-				Default("512").
+				Default("450").
 				Uint16()
 
 	elbowRotation = app.
 			Flag("elbow", "Elbow rotation [210-900].").
-			Default("512").
+			Default("400").
 			Uint16()
 
 	wristAngle = app.
 			Flag("wristAngle", "Wrist angle [200-830].").
-			Default("512").
+			Default("580").
 			Uint16()
 
 	wristRotation = app.
@@ -54,7 +54,7 @@ var (
 
 	gripper = app.
 		Flag("gripper", "Gripper [0-512].").
-		Default("512").
+		Default("255").
 		Uint16()
 
 	delta = app.
