@@ -130,8 +130,8 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 					}
 					break
 				}
-				// check if there's a user already
-				if *controller.CurrentUserInfo != (api.UserInfo{}) {
+				// check if there's no user with the given email
+				if *controller.CurrentUserInfo != (api.UserInfo{}) && userInfo.Email != controller.CurrentUserInfo.Email {
 					hmc <- api.HandlerMessage{
 						Type: api.TypeUserExisted,
 					}
