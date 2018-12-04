@@ -1,0 +1,246 @@
+---
+swagger: "2.0"
+info:
+  description: "This is a simple API for 52-5226"
+  version: "1.0.0"
+  title: "API for ICSN 2018 Assignment 4"
+  contact:
+    email: "iori.mizutani@unisg.ch"
+  license:
+    name: "Apache 2.0"
+    url: "http://www.apache.org/licenses/LICENSE-2.0.html"
+host: "interactions.iit.unisg.ch"
+basePath: "/api/52-5226/leubot/1.0.0"
+tags:
+- name: "user"
+  description: "Manage the privilege for the robot control"
+- name: "robot"
+  description: "Control base servos of PhantomX AX-12 Reactor Robot Arm"
+schemes:
+- "https"
+paths:
+  /user:
+    get:
+      tags:
+      - "user"
+      summary: "get the current user(s)"
+      description: "Check if any user is being present before\nusing the robot control\
+        \ API\n"
+      operationId: "getUser"
+      produces:
+      - "application/json"
+      parameters: []
+      responses:
+        200:
+          description: "current user info"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/UserInfo"
+        400:
+          description: "bad input parameter"
+    post:
+      tags:
+      - "user"
+      summary: "add a user"
+      description: "Adds a user to the system"
+      operationId: "addUser"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "UserInfo"
+        description: "User information to add"
+        required: false
+        schema:
+          $ref: "#/definitions/UserInfo"
+        x-exportParamName: "UserInfo"
+      responses:
+        201:
+          description: "user created"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/Token"
+        400:
+          description: "invalid input, object invalid"
+        409:
+          description: "an existing user already exists"
+    delete:
+      tags:
+      - "user"
+      summary: "remove a user"
+      description: "Removes a user to the system"
+      operationId: "removeUser"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "UserInfo"
+        description: "User information to add"
+        required: true
+        schema:
+          $ref: "#/definitions/UserInfo"
+        x-exportParamName: "UserInfo"
+      responses:
+        201:
+          description: "user deleted"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/UserInfo"
+        400:
+          description: "invalid input, object invalid"
+  /elbow:
+    put:
+      tags:
+      - "robot"
+      summary: "Set the elbow joint rotation"
+      description: "Set the rotation value for the elbow joint. The valid range for\
+        \ `value` is [210,900]."
+      operationId: "putElbow"
+      consumes:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "RobotPose"
+        description: "Pose information for the elbow joint"
+        required: true
+        schema:
+          $ref: "#/definitions/RobotPose"
+        x-exportParamName: "RobotPose"
+      responses:
+        200:
+          description: "action completed"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/RobotPose"
+        400:
+          description: "bad input parameter"
+  /wrist/angle:
+    put:
+      tags:
+      - "robot"
+      summary: "Set the wrist angle"
+      description: "Set the angle value for the wrist joint. The valid range for `value`\
+        \ is [200,830]."
+      operationId: "putWristAngle"
+      consumes:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "RobotPose"
+        description: "Pose information for the wrist angle"
+        required: true
+        schema:
+          $ref: "#/definitions/RobotPose"
+        x-exportParamName: "RobotPose"
+      responses:
+        200:
+          description: "action completed"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/RobotPose"
+        400:
+          description: "bad input parameter"
+  /wrist/rotation:
+    put:
+      tags:
+      - "robot"
+      summary: "Set the wrist rotation"
+      description: "Set the rotation value for the wrist joint. The valid range for\
+        \ `value` is [0,1023]."
+      operationId: "putWristRotation"
+      consumes:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "RobotPose"
+        description: "Pose information for the wrist rotation"
+        required: true
+        schema:
+          $ref: "#/definitions/RobotPose"
+        x-exportParamName: "RobotPose"
+      responses:
+        200:
+          description: "action completed"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/RobotPose"
+        400:
+          description: "bad input parameter"
+  /gripper:
+    put:
+      tags:
+      - "robot"
+      summary: "Set the gripper"
+      description: "Set the value for the gripper. The valid range for `value` is\
+        \ [0,512] where `0` is to close and `512` is to open all the way."
+      operationId: "putGripper"
+      consumes:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "RobotPose"
+        description: "Pose information for the gripper"
+        required: true
+        schema:
+          $ref: "#/definitions/RobotPose"
+        x-exportParamName: "RobotPose"
+      responses:
+        200:
+          description: "action completed"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/RobotPose"
+        400:
+          description: "bad input parameter"
+definitions:
+  UserInfo:
+    type: "object"
+    required:
+    - "email"
+    - "name"
+    properties:
+      name:
+        type: "string"
+        example: "Iori Mizutani"
+      email:
+        type: "string"
+        example: "iori.mizutani@unisg.ch"
+    example:
+      name: "Iori Mizutani"
+      email: "iori.mizutani@unisg.ch"
+  Token:
+    type: "object"
+    required:
+    - "token"
+    properties:
+      token:
+        type: "string"
+        example: "6dc1e80c14edf749e2ceb86d98ea1ca1"
+    example:
+      token: "6dc1e80c14edf749e2ceb86d98ea1ca1"
+  RobotPose:
+    type: "object"
+    required:
+    - "token"
+    - "value"
+    properties:
+      token:
+        type: "string"
+        example: "6dc1e80c14edf749e2ceb86d98ea1ca1"
+      value:
+        type: "integer"
+        example: 512
+    example:
+      token: "6dc1e80c14edf749e2ceb86d98ea1ca1"
+      value: 512
