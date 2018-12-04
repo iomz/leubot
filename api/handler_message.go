@@ -15,7 +15,7 @@ const (
 	TypePutWristAngle
 	TypePutWristRotation
 	TypePutGripper
-	TypeResetRobot
+	TypePutReset
 	TypeActionPerformed
 	TypeInvalidToken
 	TypeInvalidCommand

@@ -75,6 +75,19 @@ type Controller struct {
 	LastArmLinkPacket *armlink.ArmLinkPacket
 }
 
+func (controller *Controller) Shutdown() {
+	// init
+	// set the robot in sleep mode
+	alp := armlink.ArmLinkPacket{}
+	alp.SetExtended(armlink.ExtendedSleep)
+	controller.ArmLinkSerial.Send(alp.Bytes())
+	// turn off the light
+	if *miioenabled {
+		cmd := exec.Command(*miiocli, "yeelight", "--ip", *miioip, "--token", *miiotoken, "off")
+		cmd.Run()
+	}
+}
+
 func NewController(als *armlink.ArmLinkSerial) *Controller {
 	hmc := make(chan api.HandlerMessage)
 	controller := Controller{
@@ -88,6 +101,17 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 		CurrentUserInfo:   &api.UserInfo{},
 		HandlerChannel:    hmc,
 		LastArmLinkPacket: &armlink.ArmLinkPacket{},
+	}
+
+	// init
+	// set the robot in sleep mode
+	alp := armlink.ArmLinkPacket{}
+	alp.SetExtended(armlink.ExtendedSleep)
+	controller.ArmLinkSerial.Send(alp.Bytes())
+	// turn off the light
+	if *miioenabled {
+		cmd := exec.Command(*miiocli, "yeelight", "--ip", *miioip, "--token", *miiotoken, "off")
+		cmd.Run()
 	}
 
 	go func() {
@@ -146,7 +170,7 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 					break
 				}
 				// check if the token is valid
-				if controller.CurrentUserInfo.Token != token {
+				if token != controller.CurrentUserInfo.Token && token != *mastertoken {
 					hmc <- api.HandlerMessage{
 						Type: api.TypeUserNotFound,
 					}
@@ -184,7 +208,7 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 					break
 				}
 				// check the value is valid
-				if robotCommand.Value < 210 || 900 < robotCommand.Value {
+				if robotCommand.Value < 400 || 650 < robotCommand.Value {
 					hmc <- api.HandlerMessage{
 						Type: api.TypeInvalidCommand,
 					}
@@ -194,6 +218,130 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 				controller.CurrentRobotPose.Elbow = robotCommand.Value
 				// perform the move
 				controller.ArmLinkSerial.Send(controller.CurrentRobotPose.BuildArmLinkPacket().Bytes())
+
+				hmc <- api.HandlerMessage{
+					Type: api.TypeActionPerformed,
+				}
+			case api.TypePutWristAngle:
+				// receive the robotCommand
+				robotCommand, ok := msg.Value[0].(api.RobotCommand)
+				if !ok {
+					hmc <- api.HandlerMessage{
+						Type: api.TypeSomethingWentWrong,
+					}
+					break
+				}
+				// check if the token is valid
+				if robotCommand.Token != controller.CurrentUserInfo.Token && robotCommand.Token != *mastertoken {
+					hmc <- api.HandlerMessage{
+						Type: api.TypeInvalidToken,
+					}
+					break
+				}
+				// check the value is valid
+				if robotCommand.Value < 200 || 830 < robotCommand.Value {
+					hmc <- api.HandlerMessage{
+						Type: api.TypeInvalidCommand,
+					}
+					break
+				}
+				// set the value to CurrentRobotPose
+				controller.CurrentRobotPose.WristAngle = robotCommand.Value
+				// perform the move
+				controller.ArmLinkSerial.Send(controller.CurrentRobotPose.BuildArmLinkPacket().Bytes())
+
+				hmc <- api.HandlerMessage{
+					Type: api.TypeActionPerformed,
+				}
+			case api.TypePutWristRotation:
+				// receive the robotCommand
+				robotCommand, ok := msg.Value[0].(api.RobotCommand)
+				if !ok {
+					hmc <- api.HandlerMessage{
+						Type: api.TypeSomethingWentWrong,
+					}
+					break
+				}
+				// check if the token is valid
+				if robotCommand.Token != controller.CurrentUserInfo.Token && robotCommand.Token != *mastertoken {
+					hmc <- api.HandlerMessage{
+						Type: api.TypeInvalidToken,
+					}
+					break
+				}
+				// check the value is valid
+				if robotCommand.Value < 0 || 1023 < robotCommand.Value {
+					hmc <- api.HandlerMessage{
+						Type: api.TypeInvalidCommand,
+					}
+					break
+				}
+				// set the value to CurrentRobotPose
+				controller.CurrentRobotPose.WristRotation = robotCommand.Value
+				// perform the move
+				controller.ArmLinkSerial.Send(controller.CurrentRobotPose.BuildArmLinkPacket().Bytes())
+
+				hmc <- api.HandlerMessage{
+					Type: api.TypeActionPerformed,
+				}
+			case api.TypePutGripper:
+				// receive the robotCommand
+				robotCommand, ok := msg.Value[0].(api.RobotCommand)
+				if !ok {
+					hmc <- api.HandlerMessage{
+						Type: api.TypeSomethingWentWrong,
+					}
+					break
+				}
+				// check if the token is valid
+				if robotCommand.Token != controller.CurrentUserInfo.Token && robotCommand.Token != *mastertoken {
+					hmc <- api.HandlerMessage{
+						Type: api.TypeInvalidToken,
+					}
+					break
+				}
+				// check the value is valid
+				if robotCommand.Value < 0 || 512 < robotCommand.Value {
+					hmc <- api.HandlerMessage{
+						Type: api.TypeInvalidCommand,
+					}
+					break
+				}
+				// set the value to CurrentRobotPose
+				controller.CurrentRobotPose.Gripper = robotCommand.Value
+				// perform the move
+				controller.ArmLinkSerial.Send(controller.CurrentRobotPose.BuildArmLinkPacket().Bytes())
+
+				hmc <- api.HandlerMessage{
+					Type: api.TypeActionPerformed,
+				}
+			case api.TypePutReset:
+				// receive the robotCommand
+				robotCommand, ok := msg.Value[0].(api.RobotCommand)
+				if !ok {
+					hmc <- api.HandlerMessage{
+						Type: api.TypeSomethingWentWrong,
+					}
+					break
+				}
+				// check if the token is valid
+				if robotCommand.Token != controller.CurrentUserInfo.Token && robotCommand.Token != *mastertoken {
+					hmc <- api.HandlerMessage{
+						Type: api.TypeInvalidToken,
+					}
+					break
+				}
+				// reset CurrentRobotPose
+				controller.CurrentRobotPose = &RobotPose{
+					Elbow:         400,
+					WristAngle:    580,
+					WristRotation: 512,
+					Gripper:       128,
+				}
+				// perform the reset
+				alp := armlink.ArmLinkPacket{}
+				alp.SetExtended(armlink.ExtendedReset)
+				controller.ArmLinkSerial.Send(alp.Bytes())
 
 				hmc <- api.HandlerMessage{
 					Type: api.TypeActionPerformed,
@@ -217,6 +365,7 @@ func main() {
 
 	// create the controller with the serial
 	controller := NewController(als)
+	defer controller.Shutdown()
 
 	log.Printf("Server started")
 	router := api.NewRouter(controller.HandlerChannel)
