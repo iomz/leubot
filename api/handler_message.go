@@ -16,7 +16,10 @@ const (
 	TypePutWristRotation
 	TypePutGripper
 	TypeResetRobot
+	TypeActionPerformed
 	TypeInvalidToken
+	TypeInvalidCommand
+	TypeSomethingWentWrong
 )
 
 type HandlerMessage struct {

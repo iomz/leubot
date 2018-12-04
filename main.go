@@ -30,6 +30,11 @@ var (
 		New("ax12ctrl", "Provide a Web API for the PhantomX AX-12 Reactor Robot Arm.")
 
 	// flags
+	mastertoken = app.
+			Flag("mastertoken", "The master token for debug.").
+			Default("sometoken").
+			String()
+
 	miioenabled = app.
 			Flag("miioenabled", "Enable Xiaomi yeelight device.").
 			Default("false").
@@ -51,9 +56,21 @@ var (
 		String()
 )
 
+type RobotPose struct {
+	Elbow         uint16
+	WristAngle    uint16
+	WristRotation uint16
+	Gripper       uint16
+}
+
+func (rp *RobotPose) BuildArmLinkPacket() *armlink.ArmLinkPacket {
+	return armlink.NewArmLinkPacket(512, 450, rp.Elbow, rp.WristAngle, rp.WristRotation, rp.Gripper, 128, 0, 0)
+}
+
 type Controller struct {
 	ArmLinkSerial     *armlink.ArmLinkSerial
-	CurrentUser       *api.UserInfo
+	CurrentRobotPose  *RobotPose
+	CurrentUserInfo   *api.UserInfo
 	HandlerChannel    chan api.HandlerMessage
 	LastArmLinkPacket *armlink.ArmLinkPacket
 }
@@ -61,8 +78,14 @@ type Controller struct {
 func NewController(als *armlink.ArmLinkSerial) *Controller {
 	hmc := make(chan api.HandlerMessage)
 	controller := Controller{
-		ArmLinkSerial:     als,
-		CurrentUser:       &api.UserInfo{},
+		ArmLinkSerial: als,
+		CurrentRobotPose: &RobotPose{
+			Elbow:         400,
+			WristAngle:    580,
+			WristRotation: 512,
+			Gripper:       128,
+		},
+		CurrentUserInfo:   &api.UserInfo{},
 		HandlerChannel:    hmc,
 		LastArmLinkPacket: &armlink.ArmLinkPacket{},
 	}
@@ -78,19 +101,22 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 			case api.TypeAddUser:
 				userInfo, ok := msg.Value[0].(api.UserInfo)
 				if !ok {
-					log.Fatalln("TypeAddUser contains an invalid Value.")
+					hmc <- api.HandlerMessage{
+						Type: api.TypeSomethingWentWrong,
+					}
+					break
 				}
 				// check if there's a user already
-				if *controller.CurrentUser != (api.UserInfo{}) {
+				if *controller.CurrentUserInfo != (api.UserInfo{}) {
 					hmc <- api.HandlerMessage{
 						Type: api.TypeUserExisted,
 					}
 					break
 				}
 				// register the user to the system
-				controller.CurrentUser = &userInfo
+				controller.CurrentUserInfo = &userInfo
 				// generate and assign a token to the user
-				controller.CurrentUser.Token = api.GenerateToken()
+				controller.CurrentUserInfo.Token = api.GenerateToken()
 				// turn on the light
 				if *miioenabled {
 					cmd := exec.Command(*miiocli, "yeelight", "--ip", *miioip, "--token", *miiotoken, "on")
@@ -103,27 +129,31 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 
 				hmc <- api.HandlerMessage{
 					Type:  api.TypeUserAdded,
-					Value: []interface{}{*controller.CurrentUser},
+					Value: []interface{}{*controller.CurrentUserInfo},
 				}
 			case api.TypeGetUser:
 				hmc <- api.HandlerMessage{
 					Type:  api.TypeCurrentUser,
-					Value: []interface{}{*controller.CurrentUser},
+					Value: []interface{}{*controller.CurrentUserInfo},
 				}
 			case api.TypeDeleteUser:
+				// receive the token
 				token, ok := msg.Value[0].(string)
 				if !ok {
-					log.Fatalln("TypeDeleteUser contains an invalid Value.")
+					hmc <- api.HandlerMessage{
+						Type: api.TypeSomethingWentWrong,
+					}
+					break
 				}
-				// check if there's an existing user
-				if controller.CurrentUser.Token != token {
+				// check if the token is valid
+				if controller.CurrentUserInfo.Token != token {
 					hmc <- api.HandlerMessage{
 						Type: api.TypeUserNotFound,
 					}
 					break
 				}
 				// delete the current user
-				controller.CurrentUser = &api.UserInfo{}
+				controller.CurrentUserInfo = &api.UserInfo{}
 				// set the robot in sleep mode
 				alp := armlink.ArmLinkPacket{}
 				alp.SetExtended(armlink.ExtendedSleep)
@@ -136,6 +166,37 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 
 				hmc <- api.HandlerMessage{
 					Type: api.TypeUserDeleted,
+				}
+			case api.TypePutElbow:
+				// receive the robotCommand
+				robotCommand, ok := msg.Value[0].(api.RobotCommand)
+				if !ok {
+					hmc <- api.HandlerMessage{
+						Type: api.TypeSomethingWentWrong,
+					}
+					break
+				}
+				// check if the token is valid
+				if robotCommand.Token != controller.CurrentUserInfo.Token && robotCommand.Token != *mastertoken {
+					hmc <- api.HandlerMessage{
+						Type: api.TypeInvalidToken,
+					}
+					break
+				}
+				// check the value is valid
+				if robotCommand.Value < 210 || 900 < robotCommand.Value {
+					hmc <- api.HandlerMessage{
+						Type: api.TypeInvalidCommand,
+					}
+					break
+				}
+				// set the value to CurrentRobotPose
+				controller.CurrentRobotPose.Elbow = robotCommand.Value
+				// perform the move
+				controller.ArmLinkSerial.Send(controller.CurrentRobotPose.BuildArmLinkPacket().Bytes())
+
+				hmc <- api.HandlerMessage{
+					Type: api.TypeActionPerformed,
 				}
 			}
 		}
