@@ -178,6 +178,13 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 				}
 				// delete the current user
 				controller.CurrentUserInfo = &api.UserInfo{}
+				// reset CurrentRobotPose
+				controller.CurrentRobotPose = &RobotPose{
+					Elbow:         400,
+					WristAngle:    580,
+					WristRotation: 512,
+					Gripper:       128,
+				}
 				// set the robot in sleep mode
 				alp := armlink.ArmLinkPacket{}
 				alp.SetExtended(armlink.ExtendedSleep)
