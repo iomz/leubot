@@ -26,8 +26,16 @@
 
 
 [[constraint]]
+  name = "github.com/gorilla/mux"
+  version = "1.6.2"
+
+[[constraint]]
   branch = "master"
   name = "github.com/jacobsa/go-serial"
+
+[[constraint]]
+  name = "gopkg.in/alecthomas/kingpin.v2"
+  version = "2.2.6"
 
 [prune]
   go-tests = true
