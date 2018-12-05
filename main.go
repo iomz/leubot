@@ -10,6 +10,8 @@
 package main
 
 import (
+	"bytes"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -54,6 +56,15 @@ var (
 		Flag("miioip", "The IP address for Xiaomi yeelight device.").
 		Default("192.168.1.2").
 		String()
+
+	slackappenabled = app.
+			Flag("slackappenabled", "Enable Slack app for user previleges.").
+			Default("false").
+			Bool()
+	slackwebhookurl = app.
+			Flag("slackwebhookurl", "The webhook url for posting the json payloads.").
+			Default("https://hooks.slack.com/services/...").
+			String()
 )
 
 type RobotPose struct {
@@ -150,6 +161,18 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 				alp := armlink.ArmLinkPacket{}
 				alp.SetExtended(armlink.ExtendedReset)
 				controller.ArmLinkSerial.Send(alp.Bytes())
+				// post to Slack
+				if *slackappenabled {
+					var jsonStr = []byte(fmt.Sprintf(`{"text":"<!here> User %v (%v) started using Leubot."}`, userInfo.Name, userInfo.Email))
+					req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
+					req.Header.Set("Content-Type", "application/json")
+
+					r, err := (&http.Client{}).Do(req)
+					if err != nil {
+						panic(err)
+					}
+					r.Body.Close()
+				}
 
 				hmc <- api.HandlerMessage{
 					Type:  api.TypeUserAdded,
@@ -193,6 +216,18 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 				if *miioenabled {
 					cmd := exec.Command(*miiocli, "yeelight", "--ip", *miioip, "--token", *miiotoken, "off")
 					cmd.Run()
+				}
+				// post to Slack
+				if *slackappenabled {
+					var jsonStr = []byte(fmt.Sprintf(`{"text":"<!here> User %v (%v) stopped using Leubot."}`, userInfo.Name, userInfo.Email))
+					req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
+					req.Header.Set("Content-Type", "application/json")
+
+					r, err := (&http.Client{}).Do(req)
+					if err != nil {
+						panic(err)
+					}
+					r.Body.Close()
 				}
 
 				hmc <- api.HandlerMessage{
