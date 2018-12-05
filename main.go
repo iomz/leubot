@@ -164,7 +164,7 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 				// post to Slack
 				if *slackappenabled {
 					var jsonStr = []byte(fmt.Sprintf(`{"text":"<!here> User %v (%v) started using Leubot."}`, userInfo.Name, userInfo.Email))
-					req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
+					req, err := http.NewRequest("POST", *slackwebhookurl, bytes.NewBuffer(jsonStr))
 					req.Header.Set("Content-Type", "application/json")
 
 					r, err := (&http.Client{}).Do(req)
@@ -199,8 +199,6 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 					}
 					break
 				}
-				// delete the current user
-				controller.CurrentUserInfo = &api.UserInfo{}
 				// reset CurrentRobotPose
 				controller.CurrentRobotPose = &RobotPose{
 					Elbow:         400,
@@ -219,8 +217,8 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 				}
 				// post to Slack
 				if *slackappenabled {
-					var jsonStr = []byte(fmt.Sprintf(`{"text":"<!here> User %v (%v) stopped using Leubot."}`, userInfo.Name, userInfo.Email))
-					req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
+					var jsonStr = []byte(fmt.Sprintf(`{"text":"<!here> User %v (%v) stopped using Leubot."}`, controller.CurrentUserInfo.Name, controller.CurrentUserInfo.Email))
+					req, err := http.NewRequest("POST", *slackwebhookurl, bytes.NewBuffer(jsonStr))
 					req.Header.Set("Content-Type", "application/json")
 
 					r, err := (&http.Client{}).Do(req)
@@ -229,6 +227,8 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 					}
 					r.Body.Close()
 				}
+				// delete the current user
+				controller.CurrentUserInfo = &api.UserInfo{}
 
 				hmc <- api.HandlerMessage{
 					Type: api.TypeUserDeleted,

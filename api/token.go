@@ -10,7 +10,7 @@ type Token struct {
 }
 
 func GenerateToken() string {
-	b := make([]byte, 16) // 16-bit token
+	b := make([]byte, 16) // 16-byte token
 	rand.Read(b)
 	return fmt.Sprintf("%x", b)
 }
