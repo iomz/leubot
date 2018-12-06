@@ -1,0 +1,232 @@
+---
+openapi: 3.0.0
+info:
+  title: API for ICSN 2018 Assignment 4
+  description: This is a simple API for 52-5226
+  contact:
+    email: iori.mizutani@unisg.ch
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  version: 1.0.0-oas3
+servers:
+- url: https://interactions.iit.unisg.ch/52-5226/api/leubot/1.0.0
+tags:
+- name: user
+  description: Manage the privilege for the robot control
+- name: robot
+  description: Control base servos of PhantomX AX-12 Reactor Robot Arm (All the request requires a token of the user)
+paths:
+  /user:
+    get:
+      tags:
+      - user
+      summary: get the current user(s)
+      description: Check if any user is being present before using the robot control API
+      operationId: getUser
+      responses:
+        200:
+          description: current user info
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserInfo'
+              example:
+                name: Iori Mizutani
+                email: iori.mizutani@unisg.ch
+        400:
+          description: bad input parameter
+    post:
+      tags:
+      - user
+      summary: add a user
+      description: Adds a user to the system
+      operationId: addUser
+      requestBody:
+        description: User information to add
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserInfo'
+            example:
+              name: Iori Mizutani
+              email: iori.mizutani@unisg.ch
+      responses:
+        201:
+          description: user created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserInfo'
+              example:
+                name: Iori Mizutani
+                email: iori.mizutani@unisg.ch
+                token: 6dc1e80c14edf749e2ceb86d98ea1ca1
+        400:
+          description: invalid input, object invalid
+        409:
+          description: a user already exists
+  /user/{token}:
+    delete:
+      tags:
+      - user
+      summary: remove a user
+      description: Removes a user from the system with the token
+      operationId: removeUser
+      parameters:
+      - name: token
+        in: path
+        description: token of the user to delete
+        required: true
+        style: SIMPLE
+        explode: false
+        schema:
+          type: string
+        example: 6dc1e80c14edf749e2ceb86d98ea1ca1
+      responses:
+        204:
+          description: user deleted
+        400:
+          description: invalid input, object invalid
+  /elbow:
+    put:
+      tags:
+      - robot
+      summary: Set the elbow joint rotation
+      description: Set the rotation value for the elbow joint. The valid range for `value` is [400,650].
+      operationId: putElbow
+      requestBody:
+        description: Pose information for the elbow joint
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RobotCommand'
+            example:
+              token: 6dc1e80c14edf749e2ceb86d98ea1ca1
+              value: 400
+        required: true
+      responses:
+        202:
+          description: action completed
+        400:
+          description: bad input parameter
+        401:
+          description: invalid token provided; not authorized
+  /wrist/angle:
+    put:
+      tags:
+      - robot
+      summary: Set the wrist angle
+      description: Set the angle value for the wrist joint. The valid range for `value` is [200,830].
+      operationId: putWristAngle
+      requestBody:
+        description: Pose information for the wrist angle
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RobotCommand'
+            example:
+              token: 6dc1e80c14edf749e2ceb86d98ea1ca1
+              value: 580
+        required: true
+      responses:
+        202:
+          description: action completed
+        400:
+          description: bad input parameter
+        401:
+          description: invalid token provided; not authorized
+  /wrist/rotation:
+    put:
+      tags:
+      - robot
+      summary: Set the wrist rotation
+      description: Set the rotation value for the wrist joint. The valid range for `value` is [0,1023].
+      operationId: putWristRotation
+      requestBody:
+        description: Pose information for the wrist rotation
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RobotCommand'
+            example:
+              token: 6dc1e80c14edf749e2ceb86d98ea1ca1
+              value: 512
+        required: true
+      responses:
+        202:
+          description: action completed
+        400:
+          description: bad input parameter
+        401:
+          description: invalid token provided; not authorized
+  /gripper:
+    put:
+      tags:
+      - robot
+      summary: Set the gripper
+      description: Set the value for the gripper. The valid range for `value` is [0,512] where `0` is to close and `512` is to open all the way.
+      operationId: putGripper
+      requestBody:
+        description: Pose information for the gripper
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RobotCommand'
+            example:
+              token: 6dc1e80c14edf749e2ceb86d98ea1ca1
+              value: 255
+        required: true
+      responses:
+        202:
+          description: action completed
+        400:
+          description: bad input parameter
+        401:
+          description: invalid token provided; not authorized
+  /reset:
+    put:
+      tags:
+      - robot
+      summary: Reset the robot
+      description: Reset the robot to the initial state. The `value` field is ignored in the request body.
+      operationId: resetRobot
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RobotCommand'
+            example:
+              token: 6dc1e80c14edf749e2ceb86d98ea1ca1
+        required: true
+      responses:
+        202:
+          description: action completed
+        401:
+          description: invalid token provided; not authorized
+components:
+  schemas:
+    UserInfo:
+      required:
+      - email
+      - name
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        token:
+          type: string
+          readOnly: true
+    RobotCommand:
+      required:
+      - token
+      type: object
+      properties:
+        token:
+          type: string
+        value:
+          type: integer
+          format: int32
+  extensions: {}

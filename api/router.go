@@ -23,7 +23,7 @@ var HandlerChannel chan HandlerMessage
 // TODO: feed from main?
 var APIProto = "https://"
 var APIHost = "interactions.iit.unisg.ch"
-var APIBaseURL = "/52-5226/api/leubot/1.0.0"
+var APIBaseURL = "/52-5226/api/leubot/1.0.1"
 
 // TODO: construct after/within NewRouter()?
 var routes = Routes{
