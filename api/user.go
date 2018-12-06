@@ -7,10 +7,30 @@ import (
 	"path"
 )
 
+type User struct {
+	Name  string
+	Email string
+	Token string
+}
+
 type UserInfo struct {
 	Name  string `json:"name"`
 	Email string `json:"email"`
-	Token string `json:"token"`
+}
+
+func (u *User) ToUserInfo() UserInfo {
+	return UserInfo{
+		Name:  u.Name,
+		Email: u.Email,
+	}
+}
+
+func NewUser(userInfo *UserInfo) *User {
+	return &User{
+		Name:  userInfo.Name,
+		Email: userInfo.Email,
+		Token: GenerateToken(),
+	}
 }
 
 func AddUser(w http.ResponseWriter, r *http.Request) {
@@ -37,19 +57,14 @@ func AddUser(w http.ResponseWriter, r *http.Request) {
 	// respond with the result
 	switch msg.Type {
 	case TypeUserAdded: // respond with the added UserInfo
-		userInfo, ok = msg.Value[0].(UserInfo)
-		if err != nil {
+		user, ok := msg.Value[0].(User)
+		if !ok {
 			w.WriteHeader(http.StatusInternalServerError)
 		}
-		log.Printf("[HandlerChannel] UserAdded (name, email, token) = %v, %v, %v", userInfo.Name, userInfo.Email, userInfo.Token)
-		js, err := json.Marshal(userInfo)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
+		log.Printf("[HandlerChannel] UserAdded (name, email, token) = %v, %v, %v", user.Name, user.Email, user.Token)
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+		w.Header().Set("Location", APIProto+APIHost+APIBaseURL+"/user/"+user.Token)
 		w.WriteHeader(http.StatusCreated)
-		w.Write(js)
 	case TypeUserExisted: // there's a user in the system already
 		log.Printf("[HandlerChannel] UserExisted, not replacing with (name, email) = %v, %v", userInfo.Name, userInfo.Email)
 		w.WriteHeader(http.StatusConflict)
@@ -78,7 +93,6 @@ func GetUser(w http.ResponseWriter, r *http.Request) {
 		if !ok {
 			w.WriteHeader(http.StatusInternalServerError)
 		}
-		userInfo.Token = "" // remove the token
 		log.Printf("[HandlerChannel] CurrentUser (name, email) = %v, %v", userInfo.Name, userInfo.Email)
 		js, err := json.Marshal(userInfo)
 		if err != nil {

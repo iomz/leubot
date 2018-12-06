@@ -81,7 +81,7 @@ func (rp *RobotPose) BuildArmLinkPacket() *armlink.ArmLinkPacket {
 type Controller struct {
 	ArmLinkSerial     *armlink.ArmLinkSerial
 	CurrentRobotPose  *RobotPose
-	CurrentUserInfo   *api.UserInfo
+	CurrentUser       *api.User
 	HandlerChannel    chan api.HandlerMessage
 	LastArmLinkPacket *armlink.ArmLinkPacket
 }
@@ -109,7 +109,7 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 			WristRotation: 512,
 			Gripper:       128,
 		},
-		CurrentUserInfo:   &api.UserInfo{},
+		CurrentUser:       &api.User{},
 		HandlerChannel:    hmc,
 		LastArmLinkPacket: &armlink.ArmLinkPacket{},
 	}
@@ -142,16 +142,14 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 					break
 				}
 				// check if there's no user with the given email
-				if *controller.CurrentUserInfo != (api.UserInfo{}) && userInfo.Email != controller.CurrentUserInfo.Email {
+				if controller.CurrentUser.ToUserInfo() != (api.UserInfo{}) && userInfo.Email != controller.CurrentUser.Email {
 					hmc <- api.HandlerMessage{
 						Type: api.TypeUserExisted,
 					}
 					break
 				}
-				// register the user to the system
-				controller.CurrentUserInfo = &userInfo
-				// generate and assign a token to the user
-				controller.CurrentUserInfo.Token = api.GenerateToken()
+				// register the user to the system with the new token
+				controller.CurrentUser = api.NewUser(&userInfo)
 				// turn on the light
 				if *miioenabled {
 					cmd := exec.Command(*miiocli, "yeelight", "--ip", *miioip, "--token", *miiotoken, "on")
@@ -166,7 +164,6 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 					var jsonStr = []byte(fmt.Sprintf(`{"text":"<!here> User %v (%v) started using Leubot."}`, userInfo.Name, userInfo.Email))
 					req, err := http.NewRequest("POST", *slackwebhookurl, bytes.NewBuffer(jsonStr))
 					req.Header.Set("Content-Type", "application/json")
-
 					r, err := (&http.Client{}).Do(req)
 					if err != nil {
 						panic(err)
@@ -176,12 +173,12 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 
 				hmc <- api.HandlerMessage{
 					Type:  api.TypeUserAdded,
-					Value: []interface{}{*controller.CurrentUserInfo},
+					Value: []interface{}{*controller.CurrentUser},
 				}
 			case api.TypeGetUser:
 				hmc <- api.HandlerMessage{
 					Type:  api.TypeCurrentUser,
-					Value: []interface{}{*controller.CurrentUserInfo},
+					Value: []interface{}{controller.CurrentUser.ToUserInfo()},
 				}
 			case api.TypeDeleteUser:
 				// receive the token
@@ -193,7 +190,7 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 					break
 				}
 				// check if the token is valid
-				if token != controller.CurrentUserInfo.Token && token != *mastertoken {
+				if token != controller.CurrentUser.Token && token != *mastertoken {
 					hmc <- api.HandlerMessage{
 						Type: api.TypeUserNotFound,
 					}
@@ -217,18 +214,17 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 				}
 				// post to Slack
 				if *slackappenabled {
-					var jsonStr = []byte(fmt.Sprintf(`{"text":"<!here> User %v (%v) stopped using Leubot."}`, controller.CurrentUserInfo.Name, controller.CurrentUserInfo.Email))
+					var jsonStr = []byte(fmt.Sprintf(`{"text":"<!here> User %v (%v) stopped using Leubot."}`, controller.CurrentUser.Name, controller.CurrentUser.Email))
 					req, err := http.NewRequest("POST", *slackwebhookurl, bytes.NewBuffer(jsonStr))
 					req.Header.Set("Content-Type", "application/json")
-
 					r, err := (&http.Client{}).Do(req)
 					if err != nil {
 						panic(err)
 					}
 					r.Body.Close()
 				}
-				// delete the current user
-				controller.CurrentUserInfo = &api.UserInfo{}
+				// delete the current user; assign an empty User
+				controller.CurrentUser = &api.User{}
 
 				hmc <- api.HandlerMessage{
 					Type: api.TypeUserDeleted,
@@ -243,7 +239,7 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 					break
 				}
 				// check if the token is valid
-				if robotCommand.Token != controller.CurrentUserInfo.Token && robotCommand.Token != *mastertoken {
+				if robotCommand.Token != controller.CurrentUser.Token && robotCommand.Token != *mastertoken {
 					hmc <- api.HandlerMessage{
 						Type: api.TypeInvalidToken,
 					}
@@ -274,7 +270,7 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 					break
 				}
 				// check if the token is valid
-				if robotCommand.Token != controller.CurrentUserInfo.Token && robotCommand.Token != *mastertoken {
+				if robotCommand.Token != controller.CurrentUser.Token && robotCommand.Token != *mastertoken {
 					hmc <- api.HandlerMessage{
 						Type: api.TypeInvalidToken,
 					}
@@ -305,7 +301,7 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 					break
 				}
 				// check if the token is valid
-				if robotCommand.Token != controller.CurrentUserInfo.Token && robotCommand.Token != *mastertoken {
+				if robotCommand.Token != controller.CurrentUser.Token && robotCommand.Token != *mastertoken {
 					hmc <- api.HandlerMessage{
 						Type: api.TypeInvalidToken,
 					}
@@ -336,7 +332,7 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 					break
 				}
 				// check if the token is valid
-				if robotCommand.Token != controller.CurrentUserInfo.Token && robotCommand.Token != *mastertoken {
+				if robotCommand.Token != controller.CurrentUser.Token && robotCommand.Token != *mastertoken {
 					hmc <- api.HandlerMessage{
 						Type: api.TypeInvalidToken,
 					}
@@ -367,7 +363,7 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 					break
 				}
 				// check if the token is valid
-				if robotCommand.Token != controller.CurrentUserInfo.Token && robotCommand.Token != *mastertoken {
+				if robotCommand.Token != controller.CurrentUser.Token && robotCommand.Token != *mastertoken {
 					hmc <- api.HandlerMessage{
 						Type: api.TypeInvalidToken,
 					}
