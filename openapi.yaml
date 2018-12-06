@@ -1,16 +1,16 @@
 ---
 openapi: 3.0.0
 info:
-  title: API for ICSN 2018 Assignment 4
-  description: This is a simple API for 52-5226
+  title: ICSN 2018 Assignment 4 API docs - University of St. Gallen (IIT-HSG)
+  description: API for PhantomX AX-12 Reactor Robot Arm in Büro 52-5226. Watch the live streaming of the room at https://interactions.iit.unisg.ch/52-5226/live-streaming
   contact:
     email: iori.mizutani@unisg.ch
   license:
     name: Apache 2.0
     url: http://www.apache.org/licenses/LICENSE-2.0.html
-  version: 1.0.0-oas3
+  version: 1.0.1
 servers:
-- url: https://interactions.iit.unisg.ch/52-5226/api/leubot/1.0.0
+- url: https://interactions.iit.unisg.ch/52-5226/api/leubot/1.0.1
 tags:
 - name: user
   description: Manage the privilege for the robot control
@@ -21,8 +21,8 @@ paths:
     get:
       tags:
       - user
-      summary: get the current user(s)
-      description: Check if any user is being present before using the robot control API
+      summary: Get the current user information
+      description: Check if anyone is currently using the robot control API
       operationId: getUser
       responses:
         200:
@@ -31,16 +31,11 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/UserInfo'
-              example:
-                name: Iori Mizutani
-                email: iori.mizutani@unisg.ch
-        400:
-          description: bad input parameter
     post:
       tags:
       - user
-      summary: add a user
-      description: Adds a user to the system
+      summary: Add a user
+      description: Add yourself to the system and gain the token for the robot API access
       operationId: addUser
       requestBody:
         description: User information to add
@@ -48,30 +43,29 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/UserInfo'
-            example:
-              name: Iori Mizutani
-              email: iori.mizutani@unisg.ch
+        required: true
       responses:
         201:
           description: user created
-          content:
-            application/json:
+          headers:
+            Location:
+              description: The URL to delete the user
+              style: SIMPLE
+              explode: false
               schema:
-                $ref: '#/components/schemas/UserInfo'
-              example:
-                name: Iori Mizutani
-                email: iori.mizutani@unisg.ch
-                token: 6dc1e80c14edf749e2ceb86d98ea1ca1
+                type: string
+                format: url
+                example: https://interactions.iit.unisg.ch/52-5226/api/leubot/1.0.1/user/6dc1e80c14edf749e2ceb86d98ea1ca1
         400:
           description: invalid input, object invalid
         409:
-          description: a user already exists
+          description: another user already exists
   /user/{token}:
     delete:
       tags:
       - user
-      summary: remove a user
-      description: Removes a user from the system with the token
+      summary: Remove a user
+      description: Remove yourself from the system with the token to release the privilege to others
       operationId: removeUser
       parameters:
       - name: token
@@ -87,7 +81,7 @@ paths:
         204:
           description: user deleted
         400:
-          description: invalid input, object invalid
+          description: invalid token, no such user
   /elbow:
     put:
       tags:
@@ -216,9 +210,9 @@ components:
           type: string
         email:
           type: string
-        token:
-          type: string
-          readOnly: true
+      example:
+        name: Iori Mizutani
+        email: iori.mizutani@unisg.ch
     RobotCommand:
       required:
       - token
