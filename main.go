@@ -16,6 +16,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"time"
 
 	"github.com/Interactions-HSG/ax12ctrl/api"
 	"github.com/Interactions-HSG/ax12ctrl/armlink"
@@ -65,6 +66,11 @@ var (
 			Flag("slackwebhookurl", "The webhook url for posting the json payloads.").
 			Default("https://hooks.slack.com/services/...").
 			String()
+
+	userTimeout = app.
+			Flag("userTimeout", "The timeout duration for users in seconds.").
+			Default("1800").
+			Int()
 )
 
 type RobotPose struct {
@@ -84,6 +90,9 @@ type Controller struct {
 	CurrentUser       *api.User
 	HandlerChannel    chan api.HandlerMessage
 	LastArmLinkPacket *armlink.ArmLinkPacket
+	UserActChannel    chan bool
+	UserTimer         *time.Timer
+	UserTimerFinish   chan bool
 }
 
 func (controller *Controller) Shutdown() {
@@ -112,7 +121,11 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 		CurrentUser:       &api.User{},
 		HandlerChannel:    hmc,
 		LastArmLinkPacket: &armlink.ArmLinkPacket{},
+		UserActChannel:    make(chan bool),
+		UserTimer:         time.NewTimer(time.Second * 10),
+		UserTimerFinish:   make(chan bool),
 	}
+	controller.UserTimer.Stop()
 
 	// init
 	// set the robot in sleep mode
@@ -170,6 +183,52 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 					}
 					r.Body.Close()
 				}
+				// start the timer
+				if *userTimeout != 0 {
+					controller.UserTimer.Reset(time.Second * time.Duration(*userTimeout))
+					go func() {
+						for {
+							select {
+							case <-controller.UserActChannel: // Upon any activity, reset the timer
+								controller.UserTimer.Reset(time.Second * time.Duration(*userTimeout))
+							case <-controller.UserTimer.C: // Inactive, logout
+								// reset CurrentRobotPose
+								controller.CurrentRobotPose = &RobotPose{
+									Elbow:         400,
+									WristAngle:    580,
+									WristRotation: 512,
+									Gripper:       128,
+								}
+								// set the robot in sleep mode
+								alp := armlink.ArmLinkPacket{}
+								alp.SetExtended(armlink.ExtendedSleep)
+								controller.ArmLinkSerial.Send(alp.Bytes())
+								// turn off the light
+								if *miioenabled {
+									cmd := exec.Command(*miiocli, "yeelight", "--ip", *miioip, "--token", *miiotoken, "off")
+									cmd.Run()
+								}
+								// post to Slack
+								if *slackappenabled {
+									var jsonStr = []byte(fmt.Sprintf(`{"text":"<!here> User %v (%v) was inactive for 30 mins, releasing Leubot."}`, controller.CurrentUser.Name, controller.CurrentUser.Email))
+									req, err := http.NewRequest("POST", *slackwebhookurl, bytes.NewBuffer(jsonStr))
+									req.Header.Set("Content-Type", "application/json")
+									r, err := (&http.Client{}).Do(req)
+									if err != nil {
+										panic(err)
+									}
+									r.Body.Close()
+								}
+								// delete the current user; assign an empty User
+								controller.CurrentUser = &api.User{}
+								// exiting timer channel listener
+								return
+							case <-controller.UserTimerFinish:
+								return
+							}
+						}
+					}()
+				}
 
 				hmc <- api.HandlerMessage{
 					Type:  api.TypeUserAdded,
@@ -195,6 +254,11 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 						Type: api.TypeUserNotFound,
 					}
 					break
+				}
+				// stop the timer
+				if *userTimeout != 0 {
+					controller.UserTimer.Stop()
+					controller.UserTimerFinish <- true
 				}
 				// reset CurrentRobotPose
 				controller.CurrentRobotPose = &RobotPose{
@@ -252,6 +316,10 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 					}
 					break
 				}
+				// ack the timer
+				if *userTimeout != 0 {
+					controller.UserActChannel <- true
+				}
 				// set the value to CurrentRobotPose
 				controller.CurrentRobotPose.Elbow = robotCommand.Value
 				// perform the move
@@ -282,6 +350,10 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 						Type: api.TypeInvalidCommand,
 					}
 					break
+				}
+				// ack the timer
+				if *userTimeout != 0 {
+					controller.UserActChannel <- true
 				}
 				// set the value to CurrentRobotPose
 				controller.CurrentRobotPose.WristAngle = robotCommand.Value
@@ -314,6 +386,10 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 					}
 					break
 				}
+				// ack the timer
+				if *userTimeout != 0 {
+					controller.UserActChannel <- true
+				}
 				// set the value to CurrentRobotPose
 				controller.CurrentRobotPose.WristRotation = robotCommand.Value
 				// perform the move
@@ -345,6 +421,10 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 					}
 					break
 				}
+				// ack the timer
+				if *userTimeout != 0 {
+					controller.UserActChannel <- true
+				}
 				// set the value to CurrentRobotPose
 				controller.CurrentRobotPose.Gripper = robotCommand.Value
 				// perform the move
@@ -368,6 +448,10 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 						Type: api.TypeInvalidToken,
 					}
 					break
+				}
+				// ack the timer
+				if *userTimeout != 0 {
+					controller.UserActChannel <- true
 				}
 				// reset CurrentRobotPose
 				controller.CurrentRobotPose = &RobotPose{
