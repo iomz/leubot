@@ -69,7 +69,7 @@ var (
 
 	userTimeout = app.
 			Flag("userTimeout", "The timeout duration for users in seconds.").
-			Default("1800").
+			Default("900").
 			Int()
 )
 
@@ -154,8 +154,8 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 					}
 					break
 				}
-				// check if there's no user with the given email
-				if controller.CurrentUser.ToUserInfo() != (api.UserInfo{}) && userInfo.Email != controller.CurrentUser.Email {
+				// check if there's no user in the system
+				if controller.CurrentUser.ToUserInfo() != (api.UserInfo{}) {
 					hmc <- api.HandlerMessage{
 						Type: api.TypeUserExisted,
 					}
