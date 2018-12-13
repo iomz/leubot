@@ -1,12 +1,16 @@
 package armlink
 
 var (
-	ExtendedStop  = byte(17)
+	// ExtendedStop is the value for Emergency stop Extended Instruction
+	ExtendedStop = byte(17)
+	// ExtendedReset is the value for Reset Extended Instruction
 	ExtendedReset = byte(64)
+	// ExtendedSleep is the value for Sleep mode Extended Instruction
 	ExtendedSleep = byte(96)
 )
 
-type ArmLinkPacket struct {
+// Packet stores values for ArmLinkPacket
+type Packet struct {
 	baseRotation            uint16
 	shoulderRotation        uint16
 	elbowRotation           uint16
@@ -18,12 +22,14 @@ type ArmLinkPacket struct {
 	extendedInstructionByte byte
 }
 
-func (alp *ArmLinkPacket) SetExtended(e byte) {
+// SetExtended is a setter for the ArmLinkPacket's extended value
+func (alp *Packet) SetExtended(e byte) {
 	alp.extendedInstructionByte = e
 }
 
-func NewArmLinkPacket(br, sr, er, wa, wr, g uint16, d, b, e byte) *ArmLinkPacket {
-	alp := &ArmLinkPacket{
+// NewPacket is a constructor for ArmLinkPacket
+func NewPacket(br, sr, er, wa, wr, g uint16, d, b, e byte) *Packet {
+	alp := &Packet{
 		baseRotation:            br,
 		shoulderRotation:        sr,
 		elbowRotation:           er,
@@ -37,7 +43,8 @@ func NewArmLinkPacket(br, sr, er, wa, wr, g uint16, d, b, e byte) *ArmLinkPacket
 	return alp
 }
 
-func (alp *ArmLinkPacket) Bytes() []byte {
+// Bytes returns a byte array of the ArmLinkPacket ready to be sent over serial
+func (alp *Packet) Bytes() []byte {
 	baseRotationHighByte := byte((alp.baseRotation / 256) % 256)
 	baseRotationLowByte := byte(alp.baseRotation % 256)
 	shoulderRotationHighByte := byte((alp.shoulderRotation / 256) % 256)

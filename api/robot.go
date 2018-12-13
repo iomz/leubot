@@ -6,11 +6,13 @@ import (
 	"net/http"
 )
 
+// RobotCommand stores the command object
 type RobotCommand struct {
 	Token string `json:"token"`
 	Value uint16 `json:"value"`
 }
 
+// PutElbow processes the PUT request to /elbow
 func PutElbow(w http.ResponseWriter, r *http.Request) {
 	// parse the request body
 	decoder := json.NewDecoder(r.Body)
@@ -48,6 +50,7 @@ func PutElbow(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// PutWristAngle processes the PUT request to /wrist/angle
 func PutWristAngle(w http.ResponseWriter, r *http.Request) {
 	// parse the request body
 	decoder := json.NewDecoder(r.Body)
@@ -85,6 +88,7 @@ func PutWristAngle(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// PutWristRotation processes the PUT request to /wrist/rotation
 func PutWristRotation(w http.ResponseWriter, r *http.Request) {
 	// parse the request body
 	decoder := json.NewDecoder(r.Body)
@@ -122,6 +126,7 @@ func PutWristRotation(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// PutGripper processes the PUT request to /gripper
 func PutGripper(w http.ResponseWriter, r *http.Request) {
 	// parse the request body
 	decoder := json.NewDecoder(r.Body)
@@ -159,6 +164,7 @@ func PutGripper(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// PutReset processes the PUT request to /reset
 func PutReset(w http.ResponseWriter, r *http.Request) {
 	// parse the request body
 	decoder := json.NewDecoder(r.Body)

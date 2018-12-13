@@ -1,7 +1,8 @@
 /*
  * API for ICSN 2018 Assignment 4
  *
- * This is a simple API for 52-5226
+ * This is a simple API for PhantomX AX-12 Reactor Robot Arm
+ * Currently only supports the Backhoe/Joint mode
  *
  * API version: 1.0.0
  * Contact: iori.mizutani@unisg.ch
@@ -34,13 +35,13 @@ var (
 		New("ax12ctrl", "Provide a Web API for the PhantomX AX-12 Reactor Robot Arm.")
 
 	// flags
-	mastertoken = app.
-			Flag("mastertoken", "The master token for debug.").
+	masterToken = app.
+			Flag("masterToken", "The master token for debug.").
 			Default("sometoken").
 			String()
 
-	miioenabled = app.
-			Flag("miioenabled", "Enable Xiaomi yeelight device.").
+	miioEnabled = app.
+			Flag("miioEnabled", "Enable Xiaomi yeelight device.").
 			Default("false").
 			Bool()
 
@@ -49,22 +50,22 @@ var (
 		Default("/opt/bin/miiocli").
 		String()
 
-	miiotoken = app.
-			Flag("miiotoken", "The token for Xiaomi yeelight device.").
+	miioToken = app.
+			Flag("miioToken", "The token for Xiaomi yeelight device.").
 			Default("0000000000000000000000000000").
 			String()
 
-	miioip = app.
-		Flag("miioip", "The IP address for Xiaomi yeelight device.").
+	miioIP = app.
+		Flag("miioIP", "The IP address for Xiaomi yeelight device.").
 		Default("192.168.1.2").
 		String()
 
-	slackappenabled = app.
-			Flag("slackappenabled", "Enable Slack app for user previleges.").
+	slackAppEnabled = app.
+			Flag("slackAppEnabled", "Enable Slack app for user previleges.").
 			Default("false").
 			Bool()
-	slackwebhookurl = app.
-			Flag("slackwebhookurl", "The webhook url for posting the json payloads.").
+	slackWebHookURL = app.
+			Flag("slackWebHookURL", "The webhook url for posting the json payloads.").
 			Default("https://hooks.slack.com/services/...").
 			String()
 
@@ -74,6 +75,7 @@ var (
 			Int()
 )
 
+// RobotPose stores the current pose of the robot
 type RobotPose struct {
 	Elbow         uint16
 	WristAngle    uint16
@@ -81,35 +83,38 @@ type RobotPose struct {
 	Gripper       uint16
 }
 
-func (rp *RobotPose) BuildArmLinkPacket() *armlink.ArmLinkPacket {
-	return armlink.NewArmLinkPacket(512, 450, rp.Elbow, rp.WristAngle, rp.WristRotation, rp.Gripper, 128, 0, 0)
+// BuildPacket builds the corresponding Packet from the RobotPose
+func (rp *RobotPose) BuildPacket() *armlink.Packet {
+	return armlink.NewPacket(512, 450, rp.Elbow, rp.WristAngle, rp.WristRotation, rp.Gripper, 128, 0, 0)
 }
 
+// Controller is a main controller instance for the ax12ctrl
 type Controller struct {
-	ArmLinkSerial     *armlink.ArmLinkSerial
-	CurrentRobotPose  *RobotPose
-	CurrentUser       *api.User
-	HandlerChannel    chan api.HandlerMessage
-	LastArmLinkPacket *armlink.ArmLinkPacket
-	UserActChannel    chan bool
-	UserTimer         *time.Timer
-	UserTimerFinish   chan bool
+	ArmLinkSerial    *armlink.Serial
+	CurrentRobotPose *RobotPose
+	CurrentUser      *api.User
+	HandlerChannel   chan api.HandlerMessage
+	UserActChannel   chan bool
+	UserTimer        *time.Timer
+	UserTimerFinish  chan bool
 }
 
+// Shutdown performs the grace shutting down process
 func (controller *Controller) Shutdown() {
 	// init
 	// set the robot in sleep mode
-	alp := armlink.ArmLinkPacket{}
+	alp := armlink.Packet{}
 	alp.SetExtended(armlink.ExtendedSleep)
 	controller.ArmLinkSerial.Send(alp.Bytes())
 	// turn off the light
-	if *miioenabled {
-		cmd := exec.Command(*miiocli, "yeelight", "--ip", *miioip, "--token", *miiotoken, "off")
+	if *miioEnabled {
+		cmd := exec.Command(*miiocli, "yeelight", "--ip", *miioIP, "--token", *miioToken, "off")
 		cmd.Run()
 	}
 }
 
-func NewController(als *armlink.ArmLinkSerial) *Controller {
+// NewController yields a new Controller instance
+func NewController(als *armlink.Serial) *Controller {
 	hmc := make(chan api.HandlerMessage)
 	controller := Controller{
 		ArmLinkSerial: als,
@@ -119,23 +124,22 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 			WristRotation: 512,
 			Gripper:       128,
 		},
-		CurrentUser:       &api.User{},
-		HandlerChannel:    hmc,
-		LastArmLinkPacket: &armlink.ArmLinkPacket{},
-		UserActChannel:    make(chan bool),
-		UserTimer:         time.NewTimer(time.Second * 10),
-		UserTimerFinish:   make(chan bool),
+		CurrentUser:     &api.User{},
+		HandlerChannel:  hmc,
+		UserActChannel:  make(chan bool),
+		UserTimer:       time.NewTimer(time.Second * 10),
+		UserTimerFinish: make(chan bool),
 	}
 	controller.UserTimer.Stop()
 
 	// init
 	// set the robot in sleep mode
-	alp := armlink.ArmLinkPacket{}
+	alp := armlink.Packet{}
 	alp.SetExtended(armlink.ExtendedSleep)
 	controller.ArmLinkSerial.Send(alp.Bytes())
 	// turn off the light
-	if *miioenabled {
-		cmd := exec.Command(*miiocli, "yeelight", "--ip", *miioip, "--token", *miiotoken, "off")
+	if *miioEnabled {
+		cmd := exec.Command(*miiocli, "yeelight", "--ip", *miioIP, "--token", *miioToken, "off")
 		cmd.Run()
 	}
 
@@ -185,18 +189,18 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 				// register the user to the system with the new token
 				controller.CurrentUser = api.NewUser(&userInfo)
 				// turn on the light
-				if *miioenabled {
-					cmd := exec.Command(*miiocli, "yeelight", "--ip", *miioip, "--token", *miiotoken, "on")
+				if *miioEnabled {
+					cmd := exec.Command(*miiocli, "yeelight", "--ip", *miioIP, "--token", *miioToken, "on")
 					cmd.Run()
 				}
 				// set the robot in Joint mode and go to home
-				alp := armlink.ArmLinkPacket{}
+				alp := armlink.Packet{}
 				alp.SetExtended(armlink.ExtendedReset)
 				controller.ArmLinkSerial.Send(alp.Bytes())
 				// post to Slack
-				if *slackappenabled {
+				if *slackAppEnabled {
 					var jsonStr = []byte(fmt.Sprintf(`{"text":"<!here> User %v (%v) started using Leubot."}`, userInfo.Name, userInfo.Email))
-					req, err := http.NewRequest("POST", *slackwebhookurl, bytes.NewBuffer(jsonStr))
+					req, err := http.NewRequest("POST", *slackWebHookURL, bytes.NewBuffer(jsonStr))
 					req.Header.Set("Content-Type", "application/json")
 					r, err := (&http.Client{}).Do(req)
 					if err != nil {
@@ -224,18 +228,18 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 									Gripper:       128,
 								}
 								// set the robot in sleep mode
-								alp := armlink.ArmLinkPacket{}
+								alp := armlink.Packet{}
 								alp.SetExtended(armlink.ExtendedSleep)
 								controller.ArmLinkSerial.Send(alp.Bytes())
 								// turn off the light
-								if *miioenabled {
-									cmd := exec.Command(*miiocli, "yeelight", "--ip", *miioip, "--token", *miiotoken, "off")
+								if *miioEnabled {
+									cmd := exec.Command(*miiocli, "yeelight", "--ip", *miioIP, "--token", *miioToken, "off")
 									cmd.Run()
 								}
 								// post to Slack
-								if *slackappenabled {
+								if *slackAppEnabled {
 									var jsonStr = []byte(fmt.Sprintf(`{"text":"<!here> User %v (%v) was inactive for %v seconds, releasing Leubot."}`, controller.CurrentUser.Name, controller.CurrentUser.Email, *userTimeout))
-									req, err := http.NewRequest("POST", *slackwebhookurl, bytes.NewBuffer(jsonStr))
+									req, err := http.NewRequest("POST", *slackWebHookURL, bytes.NewBuffer(jsonStr))
 									req.Header.Set("Content-Type", "application/json")
 									r, err := (&http.Client{}).Do(req)
 									if err != nil {
@@ -274,7 +278,7 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 					break
 				}
 				// check if the token is valid
-				if token != controller.CurrentUser.Token && token != *mastertoken {
+				if token != controller.CurrentUser.Token && token != *masterToken {
 					hmc <- api.HandlerMessage{
 						Type: api.TypeUserNotFound,
 					}
@@ -293,18 +297,18 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 					Gripper:       128,
 				}
 				// set the robot in sleep mode
-				alp := armlink.ArmLinkPacket{}
+				alp := armlink.Packet{}
 				alp.SetExtended(armlink.ExtendedSleep)
 				controller.ArmLinkSerial.Send(alp.Bytes())
 				// turn off the light
-				if *miioenabled {
-					cmd := exec.Command(*miiocli, "yeelight", "--ip", *miioip, "--token", *miiotoken, "off")
+				if *miioEnabled {
+					cmd := exec.Command(*miiocli, "yeelight", "--ip", *miioIP, "--token", *miioToken, "off")
 					cmd.Run()
 				}
 				// post to Slack
-				if *slackappenabled {
+				if *slackAppEnabled {
 					var jsonStr = []byte(fmt.Sprintf(`{"text":"<!here> User %v (%v) stopped using Leubot."}`, controller.CurrentUser.Name, controller.CurrentUser.Email))
-					req, err := http.NewRequest("POST", *slackwebhookurl, bytes.NewBuffer(jsonStr))
+					req, err := http.NewRequest("POST", *slackWebHookURL, bytes.NewBuffer(jsonStr))
 					req.Header.Set("Content-Type", "application/json")
 					r, err := (&http.Client{}).Do(req)
 					if err != nil {
@@ -328,7 +332,7 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 					break
 				}
 				// check if the token is valid
-				if robotCommand.Token != controller.CurrentUser.Token && robotCommand.Token != *mastertoken {
+				if robotCommand.Token != controller.CurrentUser.Token && robotCommand.Token != *masterToken {
 					hmc <- api.HandlerMessage{
 						Type: api.TypeInvalidToken,
 					}
@@ -348,7 +352,7 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 				// set the value to CurrentRobotPose
 				controller.CurrentRobotPose.Elbow = robotCommand.Value
 				// perform the move
-				controller.ArmLinkSerial.Send(controller.CurrentRobotPose.BuildArmLinkPacket().Bytes())
+				controller.ArmLinkSerial.Send(controller.CurrentRobotPose.BuildPacket().Bytes())
 
 				hmc <- api.HandlerMessage{
 					Type: api.TypeActionPerformed,
@@ -363,7 +367,7 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 					break
 				}
 				// check if the token is valid
-				if robotCommand.Token != controller.CurrentUser.Token && robotCommand.Token != *mastertoken {
+				if robotCommand.Token != controller.CurrentUser.Token && robotCommand.Token != *masterToken {
 					hmc <- api.HandlerMessage{
 						Type: api.TypeInvalidToken,
 					}
@@ -383,7 +387,7 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 				// set the value to CurrentRobotPose
 				controller.CurrentRobotPose.WristAngle = robotCommand.Value
 				// perform the move
-				controller.ArmLinkSerial.Send(controller.CurrentRobotPose.BuildArmLinkPacket().Bytes())
+				controller.ArmLinkSerial.Send(controller.CurrentRobotPose.BuildPacket().Bytes())
 
 				hmc <- api.HandlerMessage{
 					Type: api.TypeActionPerformed,
@@ -398,7 +402,7 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 					break
 				}
 				// check if the token is valid
-				if robotCommand.Token != controller.CurrentUser.Token && robotCommand.Token != *mastertoken {
+				if robotCommand.Token != controller.CurrentUser.Token && robotCommand.Token != *masterToken {
 					hmc <- api.HandlerMessage{
 						Type: api.TypeInvalidToken,
 					}
@@ -418,7 +422,7 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 				// set the value to CurrentRobotPose
 				controller.CurrentRobotPose.WristRotation = robotCommand.Value
 				// perform the move
-				controller.ArmLinkSerial.Send(controller.CurrentRobotPose.BuildArmLinkPacket().Bytes())
+				controller.ArmLinkSerial.Send(controller.CurrentRobotPose.BuildPacket().Bytes())
 
 				hmc <- api.HandlerMessage{
 					Type: api.TypeActionPerformed,
@@ -433,7 +437,7 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 					break
 				}
 				// check if the token is valid
-				if robotCommand.Token != controller.CurrentUser.Token && robotCommand.Token != *mastertoken {
+				if robotCommand.Token != controller.CurrentUser.Token && robotCommand.Token != *masterToken {
 					hmc <- api.HandlerMessage{
 						Type: api.TypeInvalidToken,
 					}
@@ -453,7 +457,7 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 				// set the value to CurrentRobotPose
 				controller.CurrentRobotPose.Gripper = robotCommand.Value
 				// perform the move
-				controller.ArmLinkSerial.Send(controller.CurrentRobotPose.BuildArmLinkPacket().Bytes())
+				controller.ArmLinkSerial.Send(controller.CurrentRobotPose.BuildPacket().Bytes())
 
 				hmc <- api.HandlerMessage{
 					Type: api.TypeActionPerformed,
@@ -468,7 +472,7 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 					break
 				}
 				// check if the token is valid
-				if robotCommand.Token != controller.CurrentUser.Token && robotCommand.Token != *mastertoken {
+				if robotCommand.Token != controller.CurrentUser.Token && robotCommand.Token != *masterToken {
 					hmc <- api.HandlerMessage{
 						Type: api.TypeInvalidToken,
 					}
@@ -486,7 +490,7 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 					Gripper:       128,
 				}
 				// perform the reset
-				alp := armlink.ArmLinkPacket{}
+				alp := armlink.Packet{}
 				alp.SetExtended(armlink.ExtendedReset)
 				controller.ArmLinkSerial.Send(alp.Bytes())
 
@@ -507,7 +511,7 @@ func main() {
 	_ = parse
 
 	// initialize ArmLink serial interface to control the robot
-	als := armlink.NewArmLinkSerial()
+	als := armlink.NewSerial()
 	defer als.Close()
 
 	// create the controller with the serial

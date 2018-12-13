@@ -7,17 +7,20 @@ import (
 	"path"
 )
 
+// User stores the user information
 type User struct {
 	Name  string
 	Email string
 	Token string
 }
 
+// UserInfo is the UserInfo object
 type UserInfo struct {
 	Name  string `json:"name"`
 	Email string `json:"email"`
 }
 
+// ToUserInfo converts the User to UserInfo
 func (u *User) ToUserInfo() UserInfo {
 	return UserInfo{
 		Name:  u.Name,
@@ -25,6 +28,7 @@ func (u *User) ToUserInfo() UserInfo {
 	}
 }
 
+// NewUser yields the new User
 func NewUser(userInfo *UserInfo) *User {
 	return &User{
 		Name:  userInfo.Name,
@@ -33,6 +37,7 @@ func NewUser(userInfo *UserInfo) *User {
 	}
 }
 
+// AddUser processes the POST request to /user
 func AddUser(w http.ResponseWriter, r *http.Request) {
 	// parse the request body
 	decoder := json.NewDecoder(r.Body)
@@ -77,6 +82,7 @@ func AddUser(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// GetUser processes the GET request to /user
 func GetUser(w http.ResponseWriter, r *http.Request) {
 	// bypass the request to HandlerChannel
 	HandlerChannel <- HandlerMessage{
@@ -111,6 +117,7 @@ func GetUser(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// RemoveUser processes the DELETE requests to /user/{token}
 func RemoveUser(w http.ResponseWriter, r *http.Request) {
 	// get the token from the path
 	token := path.Base(r.URL.Path)

@@ -8,12 +8,14 @@ import (
 	"github.com/jacobsa/go-serial/serial"
 )
 
-type ArmLinkSerial struct {
+// Serial holds the serial interface to the Arbotix Robocontroller
+type Serial struct {
 	port io.ReadWriteCloser
 }
 
-func NewArmLinkSerial() *ArmLinkSerial {
-	als := &ArmLinkSerial{}
+// NewSerial is a constructor for Serial
+func NewSerial() *Serial {
+	als := &Serial{}
 
 	// Set up options.
 	options := serial.OpenOptions{
@@ -34,11 +36,13 @@ func NewArmLinkSerial() *ArmLinkSerial {
 	return als
 }
 
-func (als *ArmLinkSerial) Close() {
+// Close closes the serial connection
+func (als *Serial) Close() {
 	als.port.Close()
 }
 
-func (als *ArmLinkSerial) Send(b []byte) {
+// Send sends the given byte array
+func (als *Serial) Send(b []byte) {
 	log.Println(hex.Dump(b))
 	_, err := als.port.Write(b)
 	if err != nil {

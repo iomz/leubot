@@ -9,6 +9,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
+// Route holds the routings
 type Route struct {
 	Name        string
 	Method      string
@@ -16,13 +17,19 @@ type Route struct {
 	HandlerFunc http.HandlerFunc
 }
 
+// Routes holds the slice of Routes
 type Routes []Route
 
+// HandlerChannel is the channel to communicate with the main
 var HandlerChannel chan HandlerMessage
 
-// TODO: feed from main?
+// APIProto is the API protocol
 var APIProto = "https://"
+
+// APIHost is the API host
 var APIHost = "interactions.iit.unisg.ch"
+
+// APIBaseURL is the API path
 var APIBaseURL = "/52-5226/api/leubot/1.0.1"
 
 // TODO: construct after/within NewRouter()?
@@ -77,6 +84,7 @@ var routes = Routes{
 	},
 }
 
+// Logger writes the HTTP logs
 func Logger(inner http.Handler, name string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
@@ -93,6 +101,7 @@ func Logger(inner http.Handler, name string) http.Handler {
 	})
 }
 
+// NewRouter constructs the HTTP request router with the given HandlerMessage channel
 func NewRouter(hmc chan HandlerMessage) *mux.Router {
 	HandlerChannel = hmc
 	router := mux.NewRouter().StrictSlash(true)

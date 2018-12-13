@@ -78,13 +78,13 @@ func main() {
 	parse := kingpin.MustParse(app.Parse(os.Args[1:]))
 	_ = parse
 
-	als := armlink.NewArmLinkSerial()
+	als := armlink.NewSerial()
 	defer als.Close()
 
-	var alp *armlink.ArmLinkPacket
+	var alp *armlink.Packet
 
 	if *reset {
-		alp = armlink.NewArmLinkPacket(
+		alp = armlink.NewPacket(
 			0,
 			0,
 			0,
@@ -97,7 +97,7 @@ func main() {
 		)
 	} else {
 		// Construct ArmLink Packet based on the flags
-		alp = armlink.NewArmLinkPacket(
+		alp = armlink.NewPacket(
 			uint16(*baseRotation),     // baseRotation
 			uint16(*shoulderRotation), // shoulderRotation
 			uint16(*elbowRotation),    // elbowRotation
