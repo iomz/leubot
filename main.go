@@ -186,12 +186,15 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 				// start the timer
 				if *userTimeout != 0 {
 					controller.UserTimer.Reset(time.Second * time.Duration(*userTimeout))
+					log.Printf("[UserTimer] Started for %v", userInfo.Name)
 					go func() {
 						for {
 							select {
 							case <-controller.UserActChannel: // Upon any activity, reset the timer
+								log.Println("[UserTimer] Activity detected, resetting the timer")
 								controller.UserTimer.Reset(time.Second * time.Duration(*userTimeout))
 							case <-controller.UserTimer.C: // Inactive, logout
+								log.Printf("[UserTimer] Timeout, deleting the user %v", controller.CurrentUser.Name)
 								// reset CurrentRobotPose
 								controller.CurrentRobotPose = &RobotPose{
 									Elbow:         400,
@@ -210,7 +213,7 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 								}
 								// post to Slack
 								if *slackappenabled {
-									var jsonStr = []byte(fmt.Sprintf(`{"text":"<!here> User %v (%v) was inactive for 30 mins, releasing Leubot."}`, controller.CurrentUser.Name, controller.CurrentUser.Email))
+									var jsonStr = []byte(fmt.Sprintf(`{"text":"<!here> User %v (%v) was inactive for %v seconds, releasing Leubot."}`, controller.CurrentUser.Name, controller.CurrentUser.Email, *userTimeout))
 									req, err := http.NewRequest("POST", *slackwebhookurl, bytes.NewBuffer(jsonStr))
 									req.Header.Set("Content-Type", "application/json")
 									r, err := (&http.Client{}).Do(req)
@@ -224,6 +227,7 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 								// exiting timer channel listener
 								return
 							case <-controller.UserTimerFinish:
+								log.Println("[UserTimer] User deleted, terminating the timer")
 								return
 							}
 						}
