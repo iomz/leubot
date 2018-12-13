@@ -6,6 +6,7 @@ const (
 	TypeAddUser HandlerMessageType = iota
 	TypeUserAdded
 	TypeUserExisted
+	TypeInvalidUserInfo
 	TypeDeleteUser
 	TypeUserDeleted
 	TypeUserNotFound

@@ -20,6 +20,7 @@ import (
 
 	"github.com/Interactions-HSG/ax12ctrl/api"
 	"github.com/Interactions-HSG/ax12ctrl/armlink"
+	"github.com/badoux/checkmail"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
@@ -151,6 +152,13 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 				if !ok {
 					hmc <- api.HandlerMessage{
 						Type: api.TypeSomethingWentWrong,
+					}
+					break
+				}
+				// check if the email is valid
+				if err := checkmail.ValidateFormat(userInfo.Email); err != nil {
+					hmc <- api.HandlerMessage{
+						Type: api.TypeInvalidUserInfo,
 					}
 					break
 				}

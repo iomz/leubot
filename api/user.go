@@ -68,6 +68,9 @@ func AddUser(w http.ResponseWriter, r *http.Request) {
 	case TypeUserExisted: // there's a user in the system already
 		log.Printf("[HandlerChannel] UserExisted, not replacing with (name, email) = %v, %v", userInfo.Name, userInfo.Email)
 		w.WriteHeader(http.StatusConflict)
+	case TypeInvalidUserInfo: // invalid email
+		log.Printf("[HandlerChannel] Invalid UserInfo (name, email) = %v, %v", userInfo.Name, userInfo.Email)
+		w.WriteHeader(http.StatusBadRequest)
 	default: // something went wrong
 		w.WriteHeader(http.StatusInternalServerError)
 		return
