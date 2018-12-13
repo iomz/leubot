@@ -155,9 +155,22 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 					break
 				}
 				// check if there's no user in the system
-				if controller.CurrentUser.ToUserInfo() != (api.UserInfo{}) {
+				if controller.CurrentUser.ToUserInfo() != (api.UserInfo{}) && userInfo.Email != controller.CurrentUser.Email {
 					hmc <- api.HandlerMessage{
 						Type: api.TypeUserExisted,
+					}
+					break
+				}
+				// reissue the token for the existing user an return
+				if userInfo.Email == controller.CurrentUser.Email {
+					controller.CurrentUser = api.NewUser(&userInfo)
+					log.Printf("[User] Token reissued for %v", userInfo.Name)
+					controller.UserTimer.Reset(time.Second * time.Duration(*userTimeout))
+					log.Println("[UserTimer] Timer resetted")
+					// skip the rest and return the response with the new token
+					hmc <- api.HandlerMessage{
+						Type:  api.TypeUserAdded,
+						Value: []interface{}{*controller.CurrentUser},
 					}
 					break
 				}
