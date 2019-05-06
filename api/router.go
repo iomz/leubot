@@ -33,7 +33,7 @@ var APIProto = "https://"
 var APIHost = "api.interactions.ics.unisg.ch"
 
 // APIBaseURL is the path to the API
-var APIBaseURL = "/leubot/1.0.2"
+var APIBaseURL = "/leubot/v1.0.2"
 
 // TODO: construct after/within NewRouter()?
 var routes = Routes{
