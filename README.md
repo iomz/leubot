@@ -1,4 +1,4 @@
-# ax12ctrl
+# leubot
 A middleware provides a web API for control PhantomX AX-12 Reactor Robot Arm
 
 # Supported devices

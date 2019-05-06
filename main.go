@@ -1,9 +1,9 @@
 /*
- * API for ICSN 2018 Assignment 4
+ * Leubot
  *
- * This is a simple API for 52-5226
+ * This program provides a simple API for
+ * PhantomX AX-12 Reactor Robot Arm with ArmLink Serial interface
  *
- * API version: 1.0.0
  * Contact: iori.mizutani@unisg.ch
  */
 
@@ -18,8 +18,8 @@ import (
 	"os/exec"
 	"time"
 
-	"github.com/Interactions-HSG/ax12ctrl/api"
-	"github.com/Interactions-HSG/ax12ctrl/armlink"
+	"github.com/Interactions-HSG/leubot/api"
+	"github.com/Interactions-HSG/leubot/armlink"
 	"github.com/badoux/checkmail"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
@@ -27,11 +27,11 @@ import (
 // Environmental variables
 var (
 	// Current Version
-	version = "0.1.0"
+	version = "0.1.2"
 
 	// app
 	app = kingpin.
-		New("ax12ctrl", "Provide a Web API for the PhantomX AX-12 Reactor Robot Arm.")
+		New("leubot", "Provide a Web API for the PhantomX AX-12 Reactor Robot Arm.")
 
 	// flags
 	mastertoken = app.
@@ -74,6 +74,7 @@ var (
 			Int()
 )
 
+// RobotPose stores the rotations of each joint
 type RobotPose struct {
 	Elbow         uint16
 	WristAngle    uint16
@@ -81,10 +82,12 @@ type RobotPose struct {
 	Gripper       uint16
 }
 
+// BuildArmLinkPacket creates a new ArmLinkPacket
 func (rp *RobotPose) BuildArmLinkPacket() *armlink.ArmLinkPacket {
 	return armlink.NewArmLinkPacket(512, 450, rp.Elbow, rp.WristAngle, rp.WristRotation, rp.Gripper, 128, 0, 0)
 }
 
+// Controller is the main thread for this API provider
 type Controller struct {
 	ArmLinkSerial     *armlink.ArmLinkSerial
 	CurrentRobotPose  *RobotPose
@@ -96,8 +99,8 @@ type Controller struct {
 	UserTimerFinish   chan bool
 }
 
+// Shutdown processes the graceful termination of the program
 func (controller *Controller) Shutdown() {
-	// init
 	// set the robot in sleep mode
 	alp := armlink.ArmLinkPacket{}
 	alp.SetExtended(armlink.ExtendedSleep)
@@ -109,6 +112,7 @@ func (controller *Controller) Shutdown() {
 	}
 }
 
+// NewController creates a new instance of Controller
 func NewController(als *armlink.ArmLinkSerial) *Controller {
 	hmc := make(chan api.HandlerMessage)
 	controller := Controller{
