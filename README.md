@@ -33,7 +33,7 @@ These values are taken from: https://learn.trossenrobotics.com/arbotix/arbotix-c
 | Extended           | 0           | 254         | 0       |
 
 # API Spec
-TODO: Swagger
+See the documentation on SwaggerHub: https://app.swaggerhub.com/apis/iomz/leubot
 
 # Setting Instruction
 TODO: overall diagram and system desgin

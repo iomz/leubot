@@ -27,7 +27,7 @@ import (
 // Environmental variables
 var (
 	// Current Version
-	version = "0.1.2"
+	version = "1.0.2"
 
 	// app
 	app = kingpin.
