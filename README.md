@@ -12,9 +12,10 @@ https://www.trossenrobotics.com/p/phantomx-ax-12-reactor-robot-arm.aspx
 3. Connect the robot to your device with FTDI-USB cable.
 4. 
 ```
-% go get github.com/Interactions-HSG/ax12ctrl
-% cd `go list -f '{{.Dir}}' github.com/Interactions-HSG/ax12ctrl`
-% go run main.go
+% go get github.com/Interactions-HSG/leubot
+% cd `go list -f '{{.Dir}}' github.com/Interactions-HSG/leubot`
+% go install ./...
+% leubot --help
 ```
 
 # Reactor Arm Backhoe/Joint Positioning Limits
@@ -33,13 +34,10 @@ These values are taken from: https://learn.trossenrobotics.com/arbotix/arbotix-c
 | Extended           | 0           | 254         | 0       |
 
 # API Spec
-See the documentation on SwaggerHub: https://app.swaggerhub.com/apis/iomz/leubot
+See the API documentation: https://interactions.ics.unisg.ch/leubot
 
 # Setting Instruction
 TODO: overall diagram and system desgin
-
-# Synopsis
-
 
 # License
 See the `LICENSE` file
