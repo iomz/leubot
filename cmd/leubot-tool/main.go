@@ -12,6 +12,8 @@ import (
 )
 
 func main() {
+    log.Println("Initializing")
+
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		// return ok
 		w.WriteHeader(http.StatusOK)
@@ -58,18 +60,20 @@ func main() {
 		}
 		resp, err := http.Post(params["response_url"][0], "application/json", bytes.NewReader(jsonBytes))
 		if err != nil {
-			log.Fatal(err)
+			log.Print(err)
+            return
 		}
 		log.Println(resp)
 
 		// do stuff
 		go func() {
-			out, err := exec.Command("systemctl", "restart", "leubot.service").Output()
+			out, err := exec.Command("sudo", "/bin/systemctl", "restart", "leubot.service").Output()
 
 			if err != nil {
-				log.Fatal(err)
+				log.Print(err)
+                return
 			}
-			log.Println(out)
+			log.Printf("%s\n", out)
 			// notify after the action as a public message
 			reply = map[string]string{
 				"response_type": "in_channel",
@@ -77,15 +81,18 @@ func main() {
 			}
 			jsonBytes, _ = json.Marshal(reply)
 			if err != nil {
-				log.Fatal(err)
+				log.Print(err)
+                return
 			}
 			resp, err = http.Post(params["response_url"][0], "application/json", bytes.NewReader(jsonBytes))
 			if err != nil {
-				log.Fatal(err)
+				log.Print(err)
+                return
 			}
 			log.Println(resp)
 		}()
 	})
 
-	http.ListenAndServe("0.0.0.0:30002", nil)
+    log.Println("Starting")
+	http.ListenAndServe("192.168.2.3:30002", nil)
 }

@@ -1,0 +1,10 @@
+[Unit]
+Wants=multi-user.target
+After=multi-user.target
+
+[Service]
+ExecStart=/home/iomz/go/bin/leubot-tool
+User=pi
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,11 @@
+[Unit]
+Wants=multi-user.target
+After=multi-user.target
+
+[Service]
+#ExecStart=/opt/leubot/run-on-tmux.sh
+ExecStart=/home/iomz/go/bin/leubot --mastertoken opensesame
+User=iomz
+
+[Install]
+WantedBy=multi-user.target
