@@ -27,7 +27,7 @@ import (
 // Environmental variables
 var (
 	// Current Version
-	version = "1.0.2"
+	version = "1.0.3"
 
 	// app
 	app = kingpin.
@@ -76,6 +76,8 @@ var (
 
 // RobotPose stores the rotations of each joint
 type RobotPose struct {
+	Base          uint16
+	Shoulder      uint16
 	Elbow         uint16
 	WristAngle    uint16
 	WristRotation uint16
@@ -84,7 +86,7 @@ type RobotPose struct {
 
 // BuildArmLinkPacket creates a new ArmLinkPacket
 func (rp *RobotPose) BuildArmLinkPacket() *armlink.ArmLinkPacket {
-	return armlink.NewArmLinkPacket(512, 450, rp.Elbow, rp.WristAngle, rp.WristRotation, rp.Gripper, 128, 0, 0)
+	return armlink.NewArmLinkPacket(rp.Base, rp.Shoulder, rp.Elbow, rp.WristAngle, rp.WristRotation, rp.Gripper, 128, 0, 0)
 }
 
 // Controller is the main thread for this API provider
@@ -118,6 +120,8 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 	controller := Controller{
 		ArmLinkSerial: als,
 		CurrentRobotPose: &RobotPose{
+			Base:          512,
+			Shoulder:      512,
 			Elbow:         400,
 			WristAngle:    580,
 			WristRotation: 512,
@@ -222,6 +226,8 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 								log.Printf("[UserTimer] Timeout, deleting the user %v", controller.CurrentUser.Name)
 								// reset CurrentRobotPose
 								controller.CurrentRobotPose = &RobotPose{
+									Base:          512,
+									Shoulder:      512,
 									Elbow:         400,
 									WristAngle:    580,
 									WristRotation: 512,
@@ -291,6 +297,8 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 				}
 				// reset CurrentRobotPose
 				controller.CurrentRobotPose = &RobotPose{
+					Base:          512,
+					Shoulder:      512,
 					Elbow:         400,
 					WristAngle:    580,
 					WristRotation: 512,
@@ -321,6 +329,76 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 
 				hmc <- api.HandlerMessage{
 					Type: api.TypeUserDeleted,
+				}
+			case api.TypePutBase:
+				// receive the robotCommand
+				robotCommand, ok := msg.Value[0].(api.RobotCommand)
+				if !ok {
+					hmc <- api.HandlerMessage{
+						Type: api.TypeSomethingWentWrong,
+					}
+					break
+				}
+				// check if the token is valid
+				if robotCommand.Token != controller.CurrentUser.Token && robotCommand.Token != *mastertoken {
+					hmc <- api.HandlerMessage{
+						Type: api.TypeInvalidToken,
+					}
+					break
+				}
+				// check the value is valid
+				if robotCommand.Value < 0 || 1023 < robotCommand.Value {
+					hmc <- api.HandlerMessage{
+						Type: api.TypeInvalidCommand,
+					}
+					break
+				}
+				// ack the timer
+				if *userTimeout != 0 {
+					controller.UserActChannel <- true
+				}
+				// set the value to CurrentRobotPose
+				controller.CurrentRobotPose.Base = robotCommand.Value
+				// perform the move
+				controller.ArmLinkSerial.Send(controller.CurrentRobotPose.BuildArmLinkPacket().Bytes())
+
+				hmc <- api.HandlerMessage{
+					Type: api.TypeActionPerformed,
+				}
+			case api.TypePutShoulder:
+				// receive the robotCommand
+				robotCommand, ok := msg.Value[0].(api.RobotCommand)
+				if !ok {
+					hmc <- api.HandlerMessage{
+						Type: api.TypeSomethingWentWrong,
+					}
+					break
+				}
+				// check if the token is valid
+				if robotCommand.Token != controller.CurrentUser.Token && robotCommand.Token != *mastertoken {
+					hmc <- api.HandlerMessage{
+						Type: api.TypeInvalidToken,
+					}
+					break
+				}
+				// check the value is valid
+				if robotCommand.Value < 205 || 810 < robotCommand.Value {
+					hmc <- api.HandlerMessage{
+						Type: api.TypeInvalidCommand,
+					}
+					break
+				}
+				// ack the timer
+				if *userTimeout != 0 {
+					controller.UserActChannel <- true
+				}
+				// set the value to CurrentRobotPose
+				controller.CurrentRobotPose.Shoulder = robotCommand.Value
+				// perform the move
+				controller.ArmLinkSerial.Send(controller.CurrentRobotPose.BuildArmLinkPacket().Bytes())
+
+				hmc <- api.HandlerMessage{
+					Type: api.TypeActionPerformed,
 				}
 			case api.TypePutElbow:
 				// receive the robotCommand

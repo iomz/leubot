@@ -56,6 +56,18 @@ var routes = Routes{
 		RemoveUser,
 	},
 	Route{
+		"PutBase",
+		strings.ToUpper("Put"),
+		APIBaseURL + "/base",
+		PutBase,
+	},
+	Route{
+		"PutShoulder",
+		strings.ToUpper("Put"),
+		APIBaseURL + "/shoulder",
+		PutShoulder,
+	},
+	Route{
 		"PutElbow",
 		strings.ToUpper("Put"),
 		APIBaseURL + "/elbow",
