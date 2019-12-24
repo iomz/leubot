@@ -361,7 +361,7 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 				controller.CurrentRobotPose.Base = robotCommand.Value
 				// perform the move
 				alp := controller.CurrentRobotPose.BuildArmLinkPacket()
-				log.Printf("[ArmLinkPacket] %v", alp)
+				log.Printf("[ArmLinkPacket] %v", alp.String())
 				controller.ArmLinkSerial.Send(alp.Bytes())
 
 				hmc <- api.HandlerMessage{
@@ -398,7 +398,7 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 				controller.CurrentRobotPose.Shoulder = robotCommand.Value
 				// perform the move
 				alp := controller.CurrentRobotPose.BuildArmLinkPacket()
-				log.Printf("[ArmLinkPacket] %v", alp)
+				log.Printf("[ArmLinkPacket] %v", alp.String())
 				controller.ArmLinkSerial.Send(alp.Bytes())
 
 				hmc <- api.HandlerMessage{
@@ -435,7 +435,7 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 				controller.CurrentRobotPose.Elbow = robotCommand.Value
 				// perform the move
 				alp := controller.CurrentRobotPose.BuildArmLinkPacket()
-				log.Printf("[ArmLinkPacket] %v", alp)
+				log.Printf("[ArmLinkPacket] %v", alp.String())
 				controller.ArmLinkSerial.Send(alp.Bytes())
 
 				hmc <- api.HandlerMessage{
@@ -472,7 +472,7 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 				controller.CurrentRobotPose.WristAngle = robotCommand.Value
 				// perform the move
 				alp := controller.CurrentRobotPose.BuildArmLinkPacket()
-				log.Printf("[ArmLinkPacket] %v", alp)
+				log.Printf("[ArmLinkPacket] %v", alp.String())
 				controller.ArmLinkSerial.Send(alp.Bytes())
 
 				hmc <- api.HandlerMessage{
@@ -509,7 +509,7 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 				controller.CurrentRobotPose.WristRotation = robotCommand.Value
 				// perform the move
 				alp := controller.CurrentRobotPose.BuildArmLinkPacket()
-				log.Printf("[ArmLinkPacket] %v", alp)
+				log.Printf("[ArmLinkPacket] %v", alp.String())
 				controller.ArmLinkSerial.Send(alp.Bytes())
 
 				hmc <- api.HandlerMessage{
@@ -546,7 +546,7 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 				controller.CurrentRobotPose.Gripper = robotCommand.Value
 				// perform the move
 				alp := controller.CurrentRobotPose.BuildArmLinkPacket()
-				log.Printf("[ArmLinkPacket] %v", alp)
+				log.Printf("[ArmLinkPacket] %v", alp.String())
 				controller.ArmLinkSerial.Send(alp.Bytes())
 
 				hmc <- api.HandlerMessage{
