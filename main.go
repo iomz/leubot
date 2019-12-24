@@ -367,7 +367,9 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 					controller.UserActChannel <- true
 				}
 				// set the value to CurrentRobotPose
+				log.Printf("Base: %v", controller.CurrentRobotPose.Base)
 				controller.CurrentRobotPose.Base = robotCommand.Value
+				log.Printf("Base: %v", controller.CurrentRobotPose.Base)
 				// perform the move
 				alp := controller.CurrentRobotPose.BuildArmLinkPacket()
 				controller.ArmLinkSerial.Send(alp.Bytes())
