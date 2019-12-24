@@ -27,7 +27,7 @@ import (
 // Environmental variables
 var (
 	// Current Version
-	version = "1.0.3"
+	version = "1.0.4"
 
 	// app
 	app = kingpin.
@@ -360,7 +360,9 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 				// set the value to CurrentRobotPose
 				controller.CurrentRobotPose.Base = robotCommand.Value
 				// perform the move
-				controller.ArmLinkSerial.Send(controller.CurrentRobotPose.BuildArmLinkPacket().Bytes())
+				alp := controller.CurrentRobotPose.BuildArmLinkPacket()
+				log.Printf("[ArmLinkPacket] %v", alp)
+				controller.ArmLinkSerial.Send(alp.Bytes())
 
 				hmc <- api.HandlerMessage{
 					Type: api.TypeActionPerformed,
@@ -395,7 +397,9 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 				// set the value to CurrentRobotPose
 				controller.CurrentRobotPose.Shoulder = robotCommand.Value
 				// perform the move
-				controller.ArmLinkSerial.Send(controller.CurrentRobotPose.BuildArmLinkPacket().Bytes())
+				alp := controller.CurrentRobotPose.BuildArmLinkPacket()
+				log.Printf("[ArmLinkPacket] %v", alp)
+				controller.ArmLinkSerial.Send(alp.Bytes())
 
 				hmc <- api.HandlerMessage{
 					Type: api.TypeActionPerformed,
@@ -430,7 +434,9 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 				// set the value to CurrentRobotPose
 				controller.CurrentRobotPose.Elbow = robotCommand.Value
 				// perform the move
-				controller.ArmLinkSerial.Send(controller.CurrentRobotPose.BuildArmLinkPacket().Bytes())
+				alp := controller.CurrentRobotPose.BuildArmLinkPacket()
+				log.Printf("[ArmLinkPacket] %v", alp)
+				controller.ArmLinkSerial.Send(alp.Bytes())
 
 				hmc <- api.HandlerMessage{
 					Type: api.TypeActionPerformed,
@@ -465,7 +471,9 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 				// set the value to CurrentRobotPose
 				controller.CurrentRobotPose.WristAngle = robotCommand.Value
 				// perform the move
-				controller.ArmLinkSerial.Send(controller.CurrentRobotPose.BuildArmLinkPacket().Bytes())
+				alp := controller.CurrentRobotPose.BuildArmLinkPacket()
+				log.Printf("[ArmLinkPacket] %v", alp)
+				controller.ArmLinkSerial.Send(alp.Bytes())
 
 				hmc <- api.HandlerMessage{
 					Type: api.TypeActionPerformed,
@@ -500,7 +508,9 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 				// set the value to CurrentRobotPose
 				controller.CurrentRobotPose.WristRotation = robotCommand.Value
 				// perform the move
-				controller.ArmLinkSerial.Send(controller.CurrentRobotPose.BuildArmLinkPacket().Bytes())
+				alp := controller.CurrentRobotPose.BuildArmLinkPacket()
+				log.Printf("[ArmLinkPacket] %v", alp)
+				controller.ArmLinkSerial.Send(alp.Bytes())
 
 				hmc <- api.HandlerMessage{
 					Type: api.TypeActionPerformed,
@@ -535,7 +545,9 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 				// set the value to CurrentRobotPose
 				controller.CurrentRobotPose.Gripper = robotCommand.Value
 				// perform the move
-				controller.ArmLinkSerial.Send(controller.CurrentRobotPose.BuildArmLinkPacket().Bytes())
+				alp := controller.CurrentRobotPose.BuildArmLinkPacket()
+				log.Printf("[ArmLinkPacket] %v", alp)
+				controller.ArmLinkSerial.Send(alp.Bytes())
 
 				hmc <- api.HandlerMessage{
 					Type: api.TypeActionPerformed,

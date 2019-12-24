@@ -8,7 +8,7 @@ package main
 import (
 	"os"
 
-	"github.com/Interactions-HSG/ax12ctrl/armlink"
+	"github.com/Interactions-HSG/leubot/armlink"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 

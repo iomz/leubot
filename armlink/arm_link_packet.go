@@ -1,5 +1,9 @@
 package armlink
 
+import (
+	"fmt"
+)
+
 var (
 	ExtendedStop  = byte(17)
 	ExtendedReset = byte(64)
@@ -20,6 +24,10 @@ type ArmLinkPacket struct {
 
 func (alp *ArmLinkPacket) SetExtended(e byte) {
 	alp.extendedInstructionByte = e
+}
+
+func (alp *ArmLinkPacket) String() string {
+	return fmt.Sprintf("Base: %v, Shoulder: %v, Elbow: %v, WristAngle: %v, WristRotation: %v, Gripper: %v, Delta: %v, Button: %v, Extended: %v", alp.baseRotation, alp.shoulderRotation, alp.elbowRotation, alp.wristAngle, alp.wristRotation, alp.gripper, alp.deltaByte, alp.buttonByte, alp.extendedInstructionByte)
 }
 
 func NewArmLinkPacket(br, sr, er, wa, wr, g uint16, d, b, e byte) *ArmLinkPacket {
