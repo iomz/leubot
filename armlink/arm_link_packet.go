@@ -10,6 +10,7 @@ var (
 	ExtendedSleep = byte(96)
 )
 
+// ArmLinkPacket holds the armlink packet parameters
 type ArmLinkPacket struct {
 	baseRotation            uint16
 	shoulderRotation        uint16
@@ -22,6 +23,7 @@ type ArmLinkPacket struct {
 	extendedInstructionByte byte
 }
 
+// SetExtended set the extendedInstructionByte
 func (alp *ArmLinkPacket) SetExtended(e byte) {
 	alp.extendedInstructionByte = e
 }
@@ -30,6 +32,7 @@ func (alp *ArmLinkPacket) String() string {
 	return fmt.Sprintf("Base: %v, Shoulder: %v, Elbow: %v, WristAngle: %v, WristRotation: %v, Gripper: %v, Delta: %v, Button: %v, Extended: %v", alp.baseRotation, alp.shoulderRotation, alp.elbowRotation, alp.wristAngle, alp.wristRotation, alp.gripper, alp.deltaByte, alp.buttonByte, alp.extendedInstructionByte)
 }
 
+// NewArmLinkPacket creates a new ArmLinkPacket
 func NewArmLinkPacket(br, sr, er, wa, wr, g uint16, d, b, e byte) *ArmLinkPacket {
 	alp := &ArmLinkPacket{
 		baseRotation:            br,

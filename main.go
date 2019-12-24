@@ -18,9 +18,11 @@ import (
 	"os/exec"
 	"time"
 
-	"github.com/Interactions-HSG/leubot/api"
-	"github.com/Interactions-HSG/leubot/armlink"
+	//"github.com/Interactions-HSG/leubot/api"
+	//"github.com/Interactions-HSG/leubot/armlink"
 	"github.com/badoux/checkmail"
+	"github.com/iomz/leubot/api"
+	"github.com/iomz/leubot/armlink"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
@@ -89,6 +91,11 @@ func (rp *RobotPose) BuildArmLinkPacket() *armlink.ArmLinkPacket {
 	return armlink.NewArmLinkPacket(rp.Base, rp.Shoulder, rp.Elbow, rp.WristAngle, rp.WristRotation, rp.Gripper, 128, 0, 0)
 }
 
+// String returns a string rep for the rp
+func (rp *RobotPose) String() string {
+	return fmt.Sprintf("Base: %v, Shoulder: %v, Elbow: %v, WristAngle: %v, WristRotation: %v, Gripper: %v", rp.Base, rp.Shoulder, rp.Elbow, rp.WristAngle, rp.WristRotation, rp.Gripper)
+}
+
 // Controller is the main thread for this API provider
 type Controller struct {
 	ArmLinkSerial     *armlink.ArmLinkSerial
@@ -153,6 +160,8 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 			if !ok {
 				break
 			}
+
+			log.Printf("[CurrentRobotPose] %v", controller.CurrentRobotPose.String())
 
 			switch msg.Type {
 			case api.TypeAddUser:
@@ -263,7 +272,7 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 							}
 						}
 					}()
-				}
+				} // End if *userTimeout != 0
 
 				hmc <- api.HandlerMessage{
 					Type:  api.TypeUserAdded,
@@ -361,8 +370,8 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 				controller.CurrentRobotPose.Base = robotCommand.Value
 				// perform the move
 				alp := controller.CurrentRobotPose.BuildArmLinkPacket()
-				log.Printf("[ArmLinkPacket] %v", alp.String())
 				controller.ArmLinkSerial.Send(alp.Bytes())
+				log.Printf("[ArmLinkPacket] %v", alp.String())
 
 				hmc <- api.HandlerMessage{
 					Type: api.TypeActionPerformed,
@@ -398,8 +407,8 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 				controller.CurrentRobotPose.Shoulder = robotCommand.Value
 				// perform the move
 				alp := controller.CurrentRobotPose.BuildArmLinkPacket()
-				log.Printf("[ArmLinkPacket] %v", alp.String())
 				controller.ArmLinkSerial.Send(alp.Bytes())
+				log.Printf("[ArmLinkPacket] %v", alp.String())
 
 				hmc <- api.HandlerMessage{
 					Type: api.TypeActionPerformed,
@@ -435,8 +444,8 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 				controller.CurrentRobotPose.Elbow = robotCommand.Value
 				// perform the move
 				alp := controller.CurrentRobotPose.BuildArmLinkPacket()
-				log.Printf("[ArmLinkPacket] %v", alp.String())
 				controller.ArmLinkSerial.Send(alp.Bytes())
+				log.Printf("[ArmLinkPacket] %v", alp.String())
 
 				hmc <- api.HandlerMessage{
 					Type: api.TypeActionPerformed,
@@ -472,8 +481,8 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 				controller.CurrentRobotPose.WristAngle = robotCommand.Value
 				// perform the move
 				alp := controller.CurrentRobotPose.BuildArmLinkPacket()
-				log.Printf("[ArmLinkPacket] %v", alp.String())
 				controller.ArmLinkSerial.Send(alp.Bytes())
+				log.Printf("[ArmLinkPacket] %v", alp.String())
 
 				hmc <- api.HandlerMessage{
 					Type: api.TypeActionPerformed,
@@ -509,8 +518,8 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 				controller.CurrentRobotPose.WristRotation = robotCommand.Value
 				// perform the move
 				alp := controller.CurrentRobotPose.BuildArmLinkPacket()
-				log.Printf("[ArmLinkPacket] %v", alp.String())
 				controller.ArmLinkSerial.Send(alp.Bytes())
+				log.Printf("[ArmLinkPacket] %v", alp.String())
 
 				hmc <- api.HandlerMessage{
 					Type: api.TypeActionPerformed,
@@ -546,8 +555,8 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 				controller.CurrentRobotPose.Gripper = robotCommand.Value
 				// perform the move
 				alp := controller.CurrentRobotPose.BuildArmLinkPacket()
-				log.Printf("[ArmLinkPacket] %v", alp.String())
 				controller.ArmLinkSerial.Send(alp.Bytes())
+				log.Printf("[ArmLinkPacket] %v", alp.String())
 
 				hmc <- api.HandlerMessage{
 					Type: api.TypeActionPerformed,
