@@ -562,6 +562,8 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 				}
 				// reset CurrentRobotPose
 				controller.CurrentRobotPose = &RobotPose{
+					Base:          512,
+					Shoulder:      512,
 					Elbow:         400,
 					WristAngle:    580,
 					WristRotation: 512,
