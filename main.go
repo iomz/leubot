@@ -18,6 +18,7 @@ import (
 	"os/exec"
 	"time"
 
+	//TODO: putback Interactions-HSG repo
 	//"github.com/Interactions-HSG/leubot/api"
 	//"github.com/Interactions-HSG/leubot/armlink"
 	"github.com/badoux/checkmail"
@@ -91,6 +92,18 @@ func (rp *RobotPose) BuildArmLinkPacket() *armlink.ArmLinkPacket {
 	return armlink.NewArmLinkPacket(rp.Base, rp.Shoulder, rp.Elbow, rp.WristAngle, rp.WristRotation, rp.Gripper, 128, 0, 0)
 }
 
+// ResetToHome resets the rp to its home position
+func (rp *RobotPose) ResetToHome() {
+	rp = &RobotPose{
+		Base:          512,
+		Shoulder:      512,
+		Elbow:         400,
+		WristAngle:    580,
+		WristRotation: 512,
+		Gripper:       128,
+	}
+}
+
 // String returns a string rep for the rp
 func (rp *RobotPose) String() string {
 	return fmt.Sprintf("Base: %v, Shoulder: %v, Elbow: %v, WristAngle: %v, WristRotation: %v, Gripper: %v", rp.Base, rp.Shoulder, rp.Elbow, rp.WristAngle, rp.WristRotation, rp.Gripper)
@@ -125,15 +138,8 @@ func (controller *Controller) Shutdown() {
 func NewController(als *armlink.ArmLinkSerial) *Controller {
 	hmc := make(chan api.HandlerMessage)
 	controller := Controller{
-		ArmLinkSerial: als,
-		CurrentRobotPose: &RobotPose{
-			Base:          512,
-			Shoulder:      512,
-			Elbow:         400,
-			WristAngle:    580,
-			WristRotation: 512,
-			Gripper:       128,
-		},
+		ArmLinkSerial:     als,
+		CurrentRobotPose:  &RobotPose{},
 		CurrentUser:       &api.User{},
 		HandlerChannel:    hmc,
 		LastArmLinkPacket: &armlink.ArmLinkPacket{},
@@ -141,6 +147,7 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 		UserTimer:         time.NewTimer(time.Second * 10),
 		UserTimerFinish:   make(chan bool),
 	}
+	controller.CurrentRobotPose.ResetToHome()
 	controller.UserTimer.Stop()
 
 	// init
@@ -234,14 +241,7 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 							case <-controller.UserTimer.C: // Inactive, logout
 								log.Printf("[UserTimer] Timeout, deleting the user %v", controller.CurrentUser.Name)
 								// reset CurrentRobotPose
-								controller.CurrentRobotPose = &RobotPose{
-									Base:          512,
-									Shoulder:      512,
-									Elbow:         400,
-									WristAngle:    580,
-									WristRotation: 512,
-									Gripper:       128,
-								}
+								controller.CurrentRobotPose.ResetToHome()
 								// set the robot in sleep mode
 								alp := armlink.ArmLinkPacket{}
 								alp.SetExtended(armlink.ExtendedSleep)
@@ -305,14 +305,7 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 					controller.UserTimerFinish <- true
 				}
 				// reset CurrentRobotPose
-				controller.CurrentRobotPose = &RobotPose{
-					Base:          512,
-					Shoulder:      512,
-					Elbow:         400,
-					WristAngle:    580,
-					WristRotation: 512,
-					Gripper:       128,
-				}
+				controller.CurrentRobotPose.ResetToHome()
 				// set the robot in sleep mode
 				alp := armlink.ArmLinkPacket{}
 				alp.SetExtended(armlink.ExtendedSleep)
@@ -582,14 +575,7 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 					controller.UserActChannel <- true
 				}
 				// reset CurrentRobotPose
-				controller.CurrentRobotPose = &RobotPose{
-					Base:          512,
-					Shoulder:      512,
-					Elbow:         400,
-					WristAngle:    580,
-					WristRotation: 512,
-					Gripper:       128,
-				}
+				controller.CurrentRobotPose.ResetToHome()
 				// perform the reset
 				alp := armlink.ArmLinkPacket{}
 				alp.SetExtended(armlink.ExtendedReset)
