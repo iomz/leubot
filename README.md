@@ -24,11 +24,11 @@ These values are taken from: https://learn.trossenrobotics.com/arbotix/arbotix-c
 | Parameter          | Lower Limit | Upper Limit | Default |
 | ------------------ | ----------- | ----------- | ------- |
 | Base Joint         | 0           | 1023        | 512     |
-| Shoulder Joint     | 205         | 810         | 512     |
-| Elbow Joint        | 210         | 900         | 512     |
-| Wrist Angle Joint  | 200         | 830         | 512     |
+| Shoulder Joint     | 205         | 810         | 400     |
+| Elbow Joint        | 210         | 900         | 400     |
+| Wrist Angle Joint  | 200         | 830         | 580     |
 | Wrist Rotate Joint | 0           | 1023        | 512     |
-| Gripper Joint      | 0           | 512         | 512     |
+| Gripper Joint      | 0           | 512         | 128     |
 | Delta              | 0           | 254         | 128     |
 | Button             | 0           | 127         | 0       |
 | Extended           | 0           | 254         | 0       |
