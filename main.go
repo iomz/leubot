@@ -18,12 +18,9 @@ import (
 	"os/exec"
 	"time"
 
-	//TODO: putback Interactions-HSG repo
-	//"github.com/Interactions-HSG/leubot/api"
-	//"github.com/Interactions-HSG/leubot/armlink"
+	"github.com/Interactions-HSG/leubot/api"
+	"github.com/Interactions-HSG/leubot/armlink"
 	"github.com/badoux/checkmail"
-	"github.com/iomz/leubot/api"
-	"github.com/iomz/leubot/armlink"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
