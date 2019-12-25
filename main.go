@@ -128,10 +128,7 @@ func (controller *Controller) Shutdown() {
 	alp.SetExtended(armlink.ExtendedSleep)
 	controller.ArmLinkSerial.Send(alp.Bytes())
 	// turn off the light
-	if *miioenabled {
-		cmd := exec.Command(*miiocli, "yeelight", "--ip", *miioip, "--token", *miiotoken, "off")
-		cmd.Run()
-	}
+	switchLight(false)
 }
 
 // NewController creates a new instance of Controller
@@ -156,10 +153,7 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 	alp.SetExtended(armlink.ExtendedSleep)
 	controller.ArmLinkSerial.Send(alp.Bytes())
 	// turn off the light
-	if *miioenabled {
-		cmd := exec.Command(*miiocli, "yeelight", "--ip", *miioip, "--token", *miiotoken, "off")
-		cmd.Run()
-	}
+	switchLight(false)
 
 	go func() {
 		for {
@@ -217,17 +211,8 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 				alp := armlink.ArmLinkPacket{}
 				alp.SetExtended(armlink.ExtendedReset)
 				controller.ArmLinkSerial.Send(alp.Bytes())
-				// post to Slack
-				if *slackappenabled {
-					var jsonStr = []byte(fmt.Sprintf(`{"text":"<!here> User %v (%v) started using Leubot."}`, userInfo.Name, userInfo.Email))
-					req, err := http.NewRequest("POST", *slackwebhookurl, bytes.NewBuffer(jsonStr))
-					req.Header.Set("Content-Type", "application/json")
-					r, err := (&http.Client{}).Do(req)
-					if err != nil {
-						panic(err)
-					}
-					r.Body.Close()
-				}
+				// post to Slack - stop
+				postToSlack(fmt.Sprintf(`{"text":"<!here> User %v (%v) stopped using Leubot."}`, controller.CurrentUser.Name, controller.CurrentUser.Email))
 				// start the timer
 				if *userTimeout != 0 {
 					controller.UserTimer.Reset(time.Second * time.Duration(*userTimeout))
@@ -247,21 +232,9 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 								alp.SetExtended(armlink.ExtendedSleep)
 								controller.ArmLinkSerial.Send(alp.Bytes())
 								// turn off the light
-								if *miioenabled {
-									cmd := exec.Command(*miiocli, "yeelight", "--ip", *miioip, "--token", *miiotoken, "off")
-									cmd.Run()
-								}
+								switchLight(false)
 								// post to Slack
-								if *slackappenabled {
-									var jsonStr = []byte(fmt.Sprintf(`{"text":"<!here> User %v (%v) was inactive for %v seconds, releasing Leubot."}`, controller.CurrentUser.Name, controller.CurrentUser.Email, *userTimeout))
-									req, err := http.NewRequest("POST", *slackwebhookurl, bytes.NewBuffer(jsonStr))
-									req.Header.Set("Content-Type", "application/json")
-									r, err := (&http.Client{}).Do(req)
-									if err != nil {
-										panic(err)
-									}
-									r.Body.Close()
-								}
+								postToSlack(fmt.Sprintf(`{"text":"<!here> User %v (%v) was inactive for %v seconds, releasing Leubot."}`, controller.CurrentUser.Name, controller.CurrentUser.Email, *userTimeout))
 								// delete the current user; assign an empty User
 								controller.CurrentUser = &api.User{}
 								// exiting timer channel listener
@@ -311,21 +284,9 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 				alp.SetExtended(armlink.ExtendedSleep)
 				controller.ArmLinkSerial.Send(alp.Bytes())
 				// turn off the light
-				if *miioenabled {
-					cmd := exec.Command(*miiocli, "yeelight", "--ip", *miioip, "--token", *miiotoken, "off")
-					cmd.Run()
-				}
-				// post to Slack
-				if *slackappenabled {
-					var jsonStr = []byte(fmt.Sprintf(`{"text":"<!here> User %v (%v) stopped using Leubot."}`, controller.CurrentUser.Name, controller.CurrentUser.Email))
-					req, err := http.NewRequest("POST", *slackwebhookurl, bytes.NewBuffer(jsonStr))
-					req.Header.Set("Content-Type", "application/json")
-					r, err := (&http.Client{}).Do(req)
-					if err != nil {
-						panic(err)
-					}
-					r.Body.Close()
-				}
+				switchLight(false)
+				// post to Slack - start
+				postToSlack(fmt.Sprintf(`{"text":"<!here> User %v (%v) started using Leubot."}`, controller.CurrentUser.Name, controller.CurrentUser.Email))
 				// delete the current user; assign an empty User
 				controller.CurrentUser = &api.User{}
 
@@ -590,6 +551,32 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 	}()
 
 	return &controller
+}
+
+// postToSlack posts the status to Slack if slackappenabled
+func postToSlack(msg string) {
+	if *slackappenabled {
+		var jsonStr = []byte(msg)
+		req, err := http.NewRequest("POST", *slackwebhookurl, bytes.NewBuffer(jsonStr))
+		req.Header.Set("Content-Type", "application/json")
+		r, err := (&http.Client{}).Do(req)
+		if err != nil {
+			panic(err)
+		}
+		r.Body.Close()
+	}
+}
+
+// switchLight turns on/off the light if miioenabled
+func switchLight(on bool) {
+	if *miioenabled {
+		stateOnOff := "on"
+		if !on {
+			stateOnOff = "off"
+		}
+		cmd := exec.Command(*miiocli, "yeelight", "--ip", *miioip, "--token", *miiotoken, stateOnOff)
+		cmd.Run()
+	}
 }
 
 func main() {
