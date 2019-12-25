@@ -96,7 +96,7 @@ func (rp *RobotPose) BuildArmLinkPacket() *armlink.ArmLinkPacket {
 func (rp *RobotPose) ResetToHome() {
 	rp = &RobotPose{
 		Base:          512,
-		Shoulder:      512,
+		Shoulder:      550,
 		Elbow:         400,
 		WristAngle:    580,
 		WristRotation: 512,
@@ -208,9 +208,15 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 					cmd.Run()
 				}
 				// set the robot in Joint mode and go to home
-				alp := armlink.ArmLinkPacket{}
+				alp := &armlink.ArmLinkPacket{}
 				alp.SetExtended(armlink.ExtendedReset)
 				controller.ArmLinkSerial.Send(alp.Bytes())
+				// reset CurrentRobotPose
+				controller.CurrentRobotPose.ResetToHome()
+				// sync with Leubot
+				alp = controller.CurrentRobotPose.BuildArmLinkPacket()
+				controller.ArmLinkSerial.Send(alp.Bytes())
+				log.Printf("[ArmLinkPacket] %v", alp.String())
 				// post to Slack - stop
 				postToSlack(fmt.Sprintf(`{"text":"<!here> User %v (%v) stopped using Leubot."}`, controller.CurrentUser.Name, controller.CurrentUser.Email))
 				// start the timer
@@ -535,12 +541,16 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 				if *userTimeout != 0 {
 					controller.UserActChannel <- true
 				}
-				// reset CurrentRobotPose
-				controller.CurrentRobotPose.ResetToHome()
 				// perform the reset
-				alp := armlink.ArmLinkPacket{}
+				alp := &armlink.ArmLinkPacket{}
 				alp.SetExtended(armlink.ExtendedReset)
 				controller.ArmLinkSerial.Send(alp.Bytes())
+				// reset CurrentRobotPose
+				controller.CurrentRobotPose.ResetToHome()
+				// sync with Leubot
+				alp = controller.CurrentRobotPose.BuildArmLinkPacket()
+				controller.ArmLinkSerial.Send(alp.Bytes())
+				log.Printf("[ArmLinkPacket] %v", alp.String())
 
 				hmc <- api.HandlerMessage{
 					Type: api.TypeActionPerformed,
