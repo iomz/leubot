@@ -24,7 +24,7 @@ func PutBase(w http.ResponseWriter, r *http.Request) {
 	}
 	// bypass the request to HandlerChannel
 	HandlerChannel <- HandlerMessage{
-		Type:  TypePutElbow,
+		Type:  TypePutBase,
 		Value: []interface{}{robotCommand},
 	}
 	// receive a message from the other end of HandlerChannel
@@ -62,7 +62,7 @@ func PutShoulder(w http.ResponseWriter, r *http.Request) {
 	}
 	// bypass the request to HandlerChannel
 	HandlerChannel <- HandlerMessage{
-		Type:  TypePutElbow,
+		Type:  TypePutShoulder,
 		Value: []interface{}{robotCommand},
 	}
 	// receive a message from the other end of HandlerChannel
