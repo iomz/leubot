@@ -113,7 +113,7 @@ type Controller struct {
 func (controller *Controller) ResetPose() {
 	controller.CurrentRobotPose = &RobotPose{
 		Base:          512,
-		Shoulder:      550,
+		Shoulder:      400,
 		Elbow:         400,
 		WristAngle:    580,
 		WristRotation: 512,
