@@ -92,18 +92,6 @@ func (rp *RobotPose) BuildArmLinkPacket() *armlink.ArmLinkPacket {
 	return armlink.NewArmLinkPacket(rp.Base, rp.Shoulder, rp.Elbow, rp.WristAngle, rp.WristRotation, rp.Gripper, 128, 0, 0)
 }
 
-// ResetToHome resets the rp to its home position
-func (rp *RobotPose) ResetToHome() {
-	rp = &RobotPose{
-		Base:          512,
-		Shoulder:      550,
-		Elbow:         400,
-		WristAngle:    580,
-		WristRotation: 512,
-		Gripper:       128,
-	}
-}
-
 // String returns a string rep for the rp
 func (rp *RobotPose) String() string {
 	return fmt.Sprintf("Base: %v, Shoulder: %v, Elbow: %v, WristAngle: %v, WristRotation: %v, Gripper: %v", rp.Base, rp.Shoulder, rp.Elbow, rp.WristAngle, rp.WristRotation, rp.Gripper)
@@ -119,6 +107,18 @@ type Controller struct {
 	UserActChannel    chan bool
 	UserTimer         *time.Timer
 	UserTimerFinish   chan bool
+}
+
+// ResetPose resets the RobotPose to its home position
+func (controller *Controller) ResetPose() {
+	controller.CurrentRobotPose = &RobotPose{
+		Base:          512,
+		Shoulder:      550,
+		Elbow:         400,
+		WristAngle:    580,
+		WristRotation: 512,
+		Gripper:       128,
+	}
 }
 
 // Shutdown processes the graceful termination of the program
@@ -144,7 +144,7 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 		UserTimer:         time.NewTimer(time.Second * 10),
 		UserTimerFinish:   make(chan bool),
 	}
-	controller.CurrentRobotPose.ResetToHome()
+	controller.ResetPose()
 	controller.UserTimer.Stop()
 
 	// init
@@ -212,7 +212,7 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 				alp.SetExtended(armlink.ExtendedReset)
 				controller.ArmLinkSerial.Send(alp.Bytes())
 				// reset CurrentRobotPose
-				controller.CurrentRobotPose.ResetToHome()
+				controller.ResetPose()
 				// sync with Leubot
 				alp = controller.CurrentRobotPose.BuildArmLinkPacket()
 				controller.ArmLinkSerial.Send(alp.Bytes())
@@ -232,7 +232,7 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 							case <-controller.UserTimer.C: // Inactive, logout
 								log.Printf("[UserTimer] Timeout, deleting the user %v", controller.CurrentUser.Name)
 								// reset CurrentRobotPose
-								controller.CurrentRobotPose.ResetToHome()
+								controller.ResetPose()
 								// set the robot in sleep mode
 								alp := armlink.ArmLinkPacket{}
 								alp.SetExtended(armlink.ExtendedSleep)
@@ -284,7 +284,7 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 					controller.UserTimerFinish <- true
 				}
 				// reset CurrentRobotPose
-				controller.CurrentRobotPose.ResetToHome()
+				controller.ResetPose()
 				// set the robot in sleep mode
 				alp := armlink.ArmLinkPacket{}
 				alp.SetExtended(armlink.ExtendedSleep)
@@ -546,7 +546,7 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 				alp.SetExtended(armlink.ExtendedReset)
 				controller.ArmLinkSerial.Send(alp.Bytes())
 				// reset CurrentRobotPose
-				controller.CurrentRobotPose.ResetToHome()
+				controller.ResetPose()
 				// sync with Leubot
 				alp = controller.CurrentRobotPose.BuildArmLinkPacket()
 				controller.ArmLinkSerial.Send(alp.Bytes())
