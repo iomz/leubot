@@ -27,7 +27,7 @@ import (
 // Environmental variables
 var (
 	// Current Version
-	version = "1.0.4"
+	version = "1.1.0"
 
 	// app
 	app = kingpin.
@@ -387,7 +387,7 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 					break
 				}
 				// check the value is valid
-				if robotCommand.Value < 400 || 650 < robotCommand.Value {
+				if robotCommand.Value < 210 || 900 < robotCommand.Value {
 					hmc <- api.HandlerMessage{
 						Type: api.TypeInvalidCommand,
 					}
