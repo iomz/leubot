@@ -543,6 +543,7 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 					controller.UserActChannel <- true
 				}
 				// check the value is valid
+				log.Printf("[Posture] %v", posCom)
 				if posCom.Base < 0 || 1023 < posCom.Base ||
 					posCom.Shoulder < 205 || 810 < posCom.Shoulder ||
 					posCom.Elbow < 210 || 900 < posCom.Elbow ||

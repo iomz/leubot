@@ -264,7 +264,7 @@ func PutPosture(w http.ResponseWriter, r *http.Request) {
 	}
 	// bypass the request to HandlerChannel
 	HandlerChannel <- HandlerMessage{
-		Type:  TypePutReset,
+		Type:  TypePutPosture,
 		Value: []interface{}{posCom},
 	}
 	// receive a message from the other end of HandlerChannel
