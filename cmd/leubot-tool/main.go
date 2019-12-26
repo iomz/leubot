@@ -94,5 +94,5 @@ func main() {
 	})
 
     log.Println("Starting")
-	http.ListenAndServe("192.168.2.3:30002", nil)
+	http.ListenAndServe("0.0.0.0:30002", nil)
 }
