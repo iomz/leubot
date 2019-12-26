@@ -18,17 +18,16 @@ import (
 	"os/exec"
 	"time"
 
-	//"github.com/Interactions-HSG/leubot/api"
+	"github.com/Interactions-HSG/leubot/api"
 	"github.com/Interactions-HSG/leubot/armlink"
 	"github.com/badoux/checkmail"
-	"github.com/iomz/leubot/api"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
 // Environmental variables
 var (
 	// Current Version
-	version = "1.1.0"
+	version = "1.1.1"
 
 	// app
 	app = kingpin.
