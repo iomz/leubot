@@ -301,6 +301,14 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 					Type: api.TypeUserDeleted,
 				}
 			case api.TypePutBase:
+				// check if there's a user
+				if controller.CurrentUser.ToUserInfo() == (api.UserInfo{}) {
+					// don't allow if not activated
+					hmc <- api.HandlerMessage{
+						Type: api.TypeUserNotFound,
+					}
+					break
+				}
 				// receive the robotCommand
 				robotCommand, ok := msg.Value[0].(api.RobotCommand)
 				if !ok {
@@ -338,6 +346,14 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 					Type: api.TypeActionPerformed,
 				}
 			case api.TypePutShoulder:
+				// check if there's a user
+				if controller.CurrentUser.ToUserInfo() == (api.UserInfo{}) {
+					// don't allow if not activated
+					hmc <- api.HandlerMessage{
+						Type: api.TypeUserNotFound,
+					}
+					break
+				}
 				// receive the robotCommand
 				robotCommand, ok := msg.Value[0].(api.RobotCommand)
 				if !ok {
@@ -375,6 +391,14 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 					Type: api.TypeActionPerformed,
 				}
 			case api.TypePutElbow:
+				// check if there's a user
+				if controller.CurrentUser.ToUserInfo() == (api.UserInfo{}) {
+					// don't allow if not activated
+					hmc <- api.HandlerMessage{
+						Type: api.TypeUserNotFound,
+					}
+					break
+				}
 				// receive the robotCommand
 				robotCommand, ok := msg.Value[0].(api.RobotCommand)
 				if !ok {
@@ -412,6 +436,14 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 					Type: api.TypeActionPerformed,
 				}
 			case api.TypePutWristAngle:
+				// check if there's a user
+				if controller.CurrentUser.ToUserInfo() == (api.UserInfo{}) {
+					// don't allow if not activated
+					hmc <- api.HandlerMessage{
+						Type: api.TypeUserNotFound,
+					}
+					break
+				}
 				// receive the robotCommand
 				robotCommand, ok := msg.Value[0].(api.RobotCommand)
 				if !ok {
@@ -449,6 +481,14 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 					Type: api.TypeActionPerformed,
 				}
 			case api.TypePutWristRotation:
+				// check if there's a user
+				if controller.CurrentUser.ToUserInfo() == (api.UserInfo{}) {
+					// don't allow if not activated
+					hmc <- api.HandlerMessage{
+						Type: api.TypeUserNotFound,
+					}
+					break
+				}
 				// receive the robotCommand
 				robotCommand, ok := msg.Value[0].(api.RobotCommand)
 				if !ok {
@@ -486,6 +526,14 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 					Type: api.TypeActionPerformed,
 				}
 			case api.TypePutGripper:
+				// check if there's a user
+				if controller.CurrentUser.ToUserInfo() == (api.UserInfo{}) {
+					// don't allow if not activated
+					hmc <- api.HandlerMessage{
+						Type: api.TypeUserNotFound,
+					}
+					break
+				}
 				// receive the robotCommand
 				robotCommand, ok := msg.Value[0].(api.RobotCommand)
 				if !ok {
@@ -523,6 +571,14 @@ func NewController(als *armlink.ArmLinkSerial) *Controller {
 					Type: api.TypeActionPerformed,
 				}
 			case api.TypePutPosture:
+				// check if there's a user
+				if controller.CurrentUser.ToUserInfo() == (api.UserInfo{}) {
+					// don't allow if not activated
+					hmc <- api.HandlerMessage{
+						Type: api.TypeUserNotFound,
+					}
+					break
+				}
 				// receive the posCom
 				posCom, ok := msg.Value[0].(api.PostureCommand)
 				if !ok {
